@@ -57,8 +57,8 @@ class PlmStyleService {
   generatePastSeasonData(styleData) {
     const udf7 = styleData.UserDefinedField7Id;
     
-    // UDF7 null veya boş ise tüm değerler 0
-    if (!udf7 || udf7.trim() === '') {
+    // UDF7 null, undefined veya boş string ise tüm değerler 0
+    if (udf7 === null || udf7 === undefined || udf7 === '' || (typeof udf7 === 'string' && udf7.trim() === '')) {
       console.log('ℹ️  UDF7 boş - Tüm değerler 0 olarak döndürülüyor');
       return {
         styleId: styleData.StyleId,
@@ -79,22 +79,52 @@ class PlmStyleService {
     }
     
     // UDF7 dolu ise random değerler oluştur
-    console.log(`✅ UDF7 mevcut: ${udf7} - Random veriler oluşturuluyor`);
+    console.log(`✅ UDF7 mevcut: ${udf7} (type: ${typeof udf7}) - Gerçekçi veriler oluşturuluyor`);
+    
+    // UDF7'yi string'e çevir
+    const previousSeasonCode = String(udf7);
+    
+    // Maliyetleri hesapla (FOB = tümünün toplamı)
+    const fabricCost = this.randomDecimal(15, 35);        // Kumaş: en büyük maliyet
+    const laborCost = this.randomDecimal(8, 18);          // İşçilik
+    const trimCost = this.randomDecimal(2, 6);            // Aksesuar
+    const embroideryCost = this.randomDecimal(0, 5);      // Nakış (opsiyonel)
+    const fobCostUSD = parseFloat((fabricCost + laborCost + trimCost + embroideryCost).toFixed(2));
+    
+    // ROS (Rate of Sale) belirle - tekstil perakendeciliğinde %65-90 arası normal
+    const ros = this.randomDecimal(65, 90);
+    
+    // Markdown - ROS ile ters orantılı
+    // Yüksek ROS = düşük markdown (iyi satan ürün)
+    // Düşük ROS = yüksek markdown (zor satan ürün)
+    let markdown;
+    if (ros >= 85) {
+      markdown = this.randomDecimal(5, 20);      // Çok iyi satıyor, az indirim
+    } else if (ros >= 75) {
+      markdown = this.randomDecimal(15, 30);     // İyi satıyor, orta indirim
+    } else {
+      markdown = this.randomDecimal(25, 45);     // Zor satıyor, yüksek indirim
+    }
+    
+    // Sellout - ROS'a göre belirle
+    // ROS yüksekse sellout da yüksek olmalı
+    const baseQty = this.randomInt(100, 300);
+    const sellout = Math.round(baseQty * (ros / 100));
     
     return {
       styleId: styleData.StyleId,
       styleCode: styleData.StyleCode,
-      previousSeasonStyleCode: udf7,
+      previousSeasonStyleCode: previousSeasonCode,
       hasData: true,
       data: {
-        sellout: this.randomInt(50, 500),           // 50-500 adet
-        markdown: this.randomDecimal(0, 40),        // %0-40 indirim
-        ros: this.randomDecimal(60, 95),            // %60-95 satış oranı
-        fobCostUSD: this.randomDecimal(15, 85),     // $15-85
-        fabricCost: this.randomDecimal(8, 45),      // $8-45
-        trimCost: this.randomDecimal(1, 8),         // $1-8
-        laborCost: this.randomDecimal(5, 20),       // $5-20
-        embroideryCost: this.randomDecimal(0, 15)   // $0-15
+        sellout: sellout,                         // ROS'a göre hesaplanan satış
+        markdown: markdown,                       // ROS ile ilişkili indirim
+        ros: ros,                                 // Satış oranı %65-90
+        fobCostUSD: fobCostUSD,                   // Toplam FOB maliyet
+        fabricCost: fabricCost,                   // Kumaş maliyeti
+        trimCost: trimCost,                       // Aksesuar maliyeti
+        laborCost: laborCost,                     // İşçilik maliyeti
+        embroideryCost: embroideryCost            // Nakış maliyeti
       }
     };
   }
