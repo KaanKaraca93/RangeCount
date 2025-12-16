@@ -1,0 +1,25 @@
+###
+# Ipekyol Range Sayaç - API Test File
+# Bu dosyayı REST Client extension ile kullanabilirsiniz
+###
+
+### Health Check
+GET http://localhost:3000/
+Content-Type: application/json
+
+### Get Access Token
+GET http://localhost:3000/api/token
+Content-Type: application/json
+
+### Get Token Info (without exposing token)
+GET http://localhost:3000/api/token/info
+Content-Type: application/json
+
+### Refresh Token
+POST http://localhost:3000/api/token/refresh
+Content-Type: application/json
+
+### Revoke Token
+POST http://localhost:3000/api/token/revoke
+Content-Type: application/json
+
