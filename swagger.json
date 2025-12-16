@@ -25,6 +25,10 @@
       "description": "Kumaş tipi bazında detaylı range verileri"
     },
     {
+      "name": "PLM Style Data",
+      "description": "PLM'den style ve geçen sezon verileri"
+    },
+    {
       "name": "Token",
       "description": "PLM OAuth2.0 token yönetimi"
     }
@@ -228,6 +232,67 @@
         }
       }
     },
+    "/api/past-season-data": {
+      "post": {
+        "tags": ["PLM Style Data"],
+        "summary": "Geçen sezon verilerini getir",
+        "description": "StyleId ile PLM'den UDF7 kontrolü yaparak geçen sezon verilerini döndürür. UDF7 boş ise tüm değerler 0, dolu ise random veriler oluşturulur.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["StyleId"],
+                "properties": {
+                  "StyleId": {
+                    "type": "integer",
+                    "example": 158
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PastSeasonResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Style bulunamadı"
+          }
+        }
+      }
+    },
+    "/api/plm-style/{styleId}": {
+      "get": {
+        "tags": ["PLM Style Data"],
+        "summary": "PLM'den style bilgisi getir",
+        "parameters": [
+          {
+            "name": "styleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "example": 158
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı"
+          }
+        }
+      }
+    },
     "/api/token": {
       "get": {
         "tags": ["Token"],
@@ -415,6 +480,68 @@
           "expiresAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "PastSeasonResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "styleId": {
+            "type": "integer",
+            "example": 158
+          },
+          "styleCode": {
+            "type": "string",
+            "example": "IS1260002101"
+          },
+          "previousSeasonStyleCode": {
+            "type": "string",
+            "nullable": true,
+            "description": "UDF7 değeri - geçen sezon style kodu"
+          },
+          "hasData": {
+            "type": "boolean",
+            "description": "UDF7 dolu mu?"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "sellout": {
+                "type": "integer",
+                "description": "Satış adedi"
+              },
+              "markdown": {
+                "type": "number",
+                "description": "İndirim oranı %"
+              },
+              "ros": {
+                "type": "number",
+                "description": "Rate of Sale %"
+              },
+              "fobCostUSD": {
+                "type": "number",
+                "description": "FOB maliyet (USD)"
+              },
+              "fabricCost": {
+                "type": "number",
+                "description": "Kumaş maliyeti (USD)"
+              },
+              "trimCost": {
+                "type": "number",
+                "description": "Aksesuar maliyeti (USD)"
+              },
+              "laborCost": {
+                "type": "number",
+                "description": "İşçilik maliyeti (USD)"
+              },
+              "embroideryCost": {
+                "type": "number",
+                "description": "Nakış maliyeti (USD)"
+              }
+            }
           }
         }
       }

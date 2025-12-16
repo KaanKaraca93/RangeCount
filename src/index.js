@@ -5,6 +5,7 @@ const swaggerSpec = require('./config/swagger.config');
 const tokenRoutes = require('./routes/token.routes');
 const rangeRoutes = require('./routes/range.routes');
 const rangeDetailRoutes = require('./routes/rangeDetail.routes');
+const plmStyleRoutes = require('./routes/plmStyle.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -23,6 +24,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
 app.use('/api', tokenRoutes);
 app.use('/api', rangeRoutes);
 app.use('/api', rangeDetailRoutes);
+app.use('/api', plmStyleRoutes);
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -45,7 +47,9 @@ app.get('/', (req, res) => {
       rangeDetailsProduct: '/api/range-details/product/:group',
       rangeDetailsFabric: '/api/range-details/fabric/:type',
       rangeDetailsSpecific: '/api/range-details/detail/:lifeStyleGroup/:productGroup',
-      rangeDetailsFabricSummary: '/api/range-details/summary/fabric'
+      rangeDetailsFabricSummary: '/api/range-details/summary/fabric',
+      pastSeasonData: 'POST /api/past-season-data',
+      plmStyle: '/api/plm-style/:styleId'
     }
   });
 });
@@ -73,6 +77,9 @@ app.listen(PORT, () => {
   console.log(`   GET  /api/range-details/fabric/:type                - Get by fabric type`);
   console.log(`   GET  /api/range-details/detail/:lifestyle/:product  - Specific detail`);
   console.log(`   GET  /api/range-details/summary/fabric              - Fabric summary`);
+  console.log(`\n🎨 PLM Style & Past Season Data:`);
+  console.log(`   POST /api/past-season-data                          - Get past season data by StyleId`);
+  console.log(`   GET  /api/plm-style/:styleId                        - Get PLM style info (test)`);
 });
 
 module.exports = app;

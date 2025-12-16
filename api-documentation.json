@@ -103,6 +103,32 @@
       }
     },
     {
+      "path": "/api/past-season-data",
+      "method": "POST",
+      "description": "StyleId ile PLM'den geçen sezon verilerini getir - UDF7 kontrolü yapar",
+      "request_body": {
+        "StyleId": 158
+      },
+      "response_example": {
+        "success": true,
+        "styleId": 158,
+        "styleCode": "IS1260002101",
+        "previousSeasonStyleCode": "IS1160002101",
+        "hasData": true,
+        "data": {
+          "sellout": 245,
+          "markdown": 25.5,
+          "ros": 82.3,
+          "fobCostUSD": 42.75,
+          "fabricCost": 22.30,
+          "trimCost": 4.20,
+          "laborCost": 12.50,
+          "embroideryCost": 3.75
+        }
+      },
+      "note": "UDF7 (UserDefinedField7Id) boş ise tüm data değerleri 0 döner"
+    },
+    {
       "path": "/api/range-details",
       "method": "GET",
       "description": "Tüm range detay verilerini getir - Kumaş tipi bazında P_Opt, T_Opt, G_Opt, Fark, Oran detaylarını içerir (13 satır)",
@@ -228,6 +254,32 @@
     "total_detail_rows": 13,
     "fabric_types": ["Dokuma", "Triko", "Örme", "Kumaş Mix"],
     "sample_use_case": "ELBISE için Mono grubunda 42 Dokuma, 6 Örme, 1 Triko, 8 Kumaş Mix planlanmış"
+  },
+  
+  "plm_integration": {
+    "description": "PLM'den gerçek zamanlı veri çekme - OAuth2.0 token ile",
+    "endpoint": "POST /api/past-season-data",
+    "input": {
+      "StyleId": "PLM'deki style ID"
+    },
+    "logic": {
+      "step1": "PLM'den Style bilgisi çek (StyleId, StyleCode, UDF7)",
+      "step2": "UDF7 kontrolü yap",
+      "if_udf7_empty": "Tüm cost ve sales verileri 0 döner",
+      "if_udf7_filled": "Geçen sezon için random veriler oluştur (POC için)"
+    },
+    "cost_fields": [
+      "fobCostUSD",
+      "fabricCost",
+      "trimCost",
+      "laborCost",
+      "embroideryCost"
+    ],
+    "sales_fields": [
+      "sellout",
+      "markdown",
+      "ros"
+    ]
   }
 }
 
