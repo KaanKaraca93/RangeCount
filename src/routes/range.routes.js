@@ -3,7 +3,30 @@ const router = express.Router();
 const rangeDataService = require('../services/rangeDataService');
 
 /**
- * Tüm range verilerini getir
+ * @swagger
+ * /api/ranges:
+ *   get:
+ *     summary: Tüm range verilerini getir
+ *     description: Excel'den yüklenen tüm range (option) verilerini döndürür. 53 satır veri içerir.
+ *     tags: [Range Data]
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: integer
+ *                   example: 53
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/RangeData'
  */
 router.get('/ranges', (req, res) => {
   try {
@@ -25,7 +48,24 @@ router.get('/ranges', (req, res) => {
 });
 
 /**
- * Özet istatistikler
+ * @swagger
+ * /api/ranges/summary:
+ *   get:
+ *     summary: Özet istatistikler
+ *     description: Genel ve grup bazında tamamlanma istatistiklerini döndürür
+ *     tags: [Range Data]
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 summary:
+ *                   $ref: '#/components/schemas/Summary'
  */
 router.get('/ranges/summary', (req, res) => {
   try {
@@ -46,7 +86,39 @@ router.get('/ranges/summary', (req, res) => {
 });
 
 /**
- * Life Style Grup'a göre filtrele
+ * @swagger
+ * /api/ranges/lifestyle/{group}:
+ *   get:
+ *     summary: Life Style Grup'a göre filtrele
+ *     description: Belirli bir life style grubuna ait range verilerini döndürür
+ *     tags: [Range Data]
+ *     parameters:
+ *       - in: path
+ *         name: group
+ *         required: true
+ *         schema:
+ *           type: string
+ *           enum: [Business, Essential, Mono, Tema]
+ *         description: Life style grup adı
+ *         example: Mono
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 group:
+ *                   type: string
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/RangeData'
  */
 router.get('/ranges/lifestyle/:group', (req, res) => {
   try {
@@ -70,7 +142,38 @@ router.get('/ranges/lifestyle/:group', (req, res) => {
 });
 
 /**
- * Ürün Alt Grup'a göre filtrele
+ * @swagger
+ * /api/ranges/product/{group}:
+ *   get:
+ *     summary: Ürün Alt Grup'a göre filtrele
+ *     description: Belirli bir ürün alt grubuna ait range verilerini döndürür (ELBISE, BLUZ, PANTOLON, vb.)
+ *     tags: [Range Data]
+ *     parameters:
+ *       - in: path
+ *         name: group
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Ürün alt grup adı
+ *         example: ELBISE
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 productGroup:
+ *                   type: string
+ *                 count:
+ *                   type: integer
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/RangeData'
  */
 router.get('/ranges/product/:group', (req, res) => {
   try {
@@ -94,7 +197,26 @@ router.get('/ranges/product/:group', (req, res) => {
 });
 
 /**
- * Veriyi yeniden yükle
+ * @swagger
+ * /api/ranges/reload:
+ *   post:
+ *     summary: Excel verisini yeniden yükle
+ *     description: Excel dosyasını yeniden okuyup cache'i günceller
+ *     tags: [Range Data]
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 count:
+ *                   type: integer
  */
 router.post('/ranges/reload', (req, res) => {
   try {

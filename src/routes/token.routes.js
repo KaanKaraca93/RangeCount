@@ -3,8 +3,21 @@ const router = express.Router();
 const tokenService = require('../services/tokenService');
 
 /**
- * Get access token
- * This endpoint returns a valid access token (cached or new)
+ * @swagger
+ * /api/token:
+ *   get:
+ *     summary: PLM Access Token Al
+ *     description: Infor PLM/ION API için geçerli bir OAuth2.0 access token döndürür. Token cache'lenir ve otomatik yenilenir.
+ *     tags: [Token]
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/TokenResponse'
+ *       500:
+ *         description: Token alınamadı
  */
 router.get('/token', async (req, res) => {
   try {
@@ -28,7 +41,34 @@ router.get('/token', async (req, res) => {
 });
 
 /**
- * Get token info (without exposing the actual token)
+ * @swagger
+ * /api/token/info:
+ *   get:
+ *     summary: Token Bilgisi
+ *     description: Token durumu ve geçerlilik bilgilerini döndürür (token değerini göstermeden)
+ *     tags: [Token]
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 tokenInfo:
+ *                   type: object
+ *                   properties:
+ *                     hasToken:
+ *                       type: boolean
+ *                     isValid:
+ *                       type: boolean
+ *                     expiryTime:
+ *                       type: string
+ *                       format: date-time
+ *                     tokenType:
+ *                       type: string
  */
 router.get('/token/info', async (req, res) => {
   try {
@@ -70,7 +110,31 @@ router.post('/token/revoke', async (req, res) => {
 });
 
 /**
- * Refresh token (force new token acquisition)
+ * @swagger
+ * /api/token/refresh:
+ *   post:
+ *     summary: Token Yenile
+ *     description: Mevcut token'ı iptal edip yeni token alır (force refresh)
+ *     tags: [Token]
+ *     responses:
+ *       200:
+ *         description: Başarılı
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                 accessToken:
+ *                   type: string
+ *                 tokenType:
+ *                   type: string
+ *                 expiresAt:
+ *                   type: string
+ *                   format: date-time
  */
 router.post('/token/refresh', async (req, res) => {
   try {

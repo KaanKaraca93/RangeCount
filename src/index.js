@@ -1,5 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./config/swagger.config');
 const tokenRoutes = require('./routes/token.routes');
 const rangeRoutes = require('./routes/range.routes');
 
@@ -9,6 +11,12 @@ const PORT = process.env.PORT || 3000;
 // Middleware
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+  customCss: '.swagger-ui .topbar { display: none }',
+  customSiteTitle: 'Ipekyol Range Sayaç API Docs'
+}));
 
 // Routes
 app.use('/api', tokenRoutes);
@@ -20,6 +28,7 @@ app.get('/', (req, res) => {
     message: 'Ipekyol Range Sayaç API',
     version: '1.0.0',
     status: 'running',
+    documentation: '/api-docs',
     endpoints: {
       token: '/api/token',
       tokenInfo: '/api/token/info',
@@ -37,6 +46,7 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   console.log(`📍 http://localhost:${PORT}`);
+  console.log(`📚 Swagger Docs: http://localhost:${PORT}/api-docs`);
   console.log(`\n📋 Token Endpoints:`);
   console.log(`   GET  /api/token                    - Get access token`);
   console.log(`   GET  /api/token/info               - Get token info`);

@@ -1,0 +1,132 @@
+{
+  "api_name": "Ipekyol Range Sayaç API",
+  "version": "1.0.0",
+  "base_url": "https://rangecount-652fcc1f20d9.herokuapp.com",
+  "description": "Koleksiyon planlama ve range takip sistemi",
+  
+  "endpoints": [
+    {
+      "path": "/api/ranges",
+      "method": "GET",
+      "description": "Tüm range verilerini getir (53 satır)",
+      "response_example": {
+        "success": true,
+        "count": 53,
+        "data": [
+          {
+            "Marka": "IPEKYOL",
+            "Kategori": "TEKSTIL",
+            "Life Style Grup": "Business",
+            "Ürün Alt Grup": "BLAZER",
+            "P_Opt": 6,
+            "T_Opt": 2,
+            "G_Opt": 5,
+            "Fark": 1,
+            "Oran": "83%"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/api/ranges/summary",
+      "method": "GET",
+      "description": "Özet istatistikler - Genel ve grup bazında tamamlanma oranları",
+      "response_example": {
+        "success": true,
+        "summary": {
+          "genel": {
+            "toplamPlanlanan": 1094,
+            "toplamGerceklesen": 838,
+            "toplamTaslak": 134,
+            "toplamFark": 256,
+            "genelTamamlanma": "77%"
+          },
+          "grupBazinda": [
+            {
+              "grup": "Business",
+              "planlanan": 49,
+              "gerceklesen": 30,
+              "fark": 19,
+              "tamamlanma": "61%"
+            },
+            {
+              "grup": "Mono",
+              "planlanan": 489,
+              "gerceklesen": 377,
+              "fark": 112,
+              "tamamlanma": "77%"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "path": "/api/ranges/lifestyle/{group}",
+      "method": "GET",
+      "description": "Life Style Grup'a göre filtrele",
+      "parameters": {
+        "group": "Business, Essential, Mono, Tema"
+      },
+      "example": "/api/ranges/lifestyle/Mono",
+      "response_example": {
+        "success": true,
+        "group": "Mono",
+        "count": 16,
+        "data": []
+      }
+    },
+    {
+      "path": "/api/ranges/product/{group}",
+      "method": "GET",
+      "description": "Ürün Alt Grup'a göre filtrele",
+      "parameters": {
+        "group": "ELBISE, BLUZ, PANTOLON, CEKET, vb."
+      },
+      "example": "/api/ranges/product/ELBISE",
+      "response_example": {
+        "success": true,
+        "productGroup": "ELBISE",
+        "count": 4,
+        "data": []
+      }
+    },
+    {
+      "path": "/api/token",
+      "method": "GET",
+      "description": "PLM için OAuth2.0 access token al",
+      "response_example": {
+        "success": true,
+        "accessToken": "eyJraWQiOiJrZzpjZDU0MzcxO...",
+        "tokenType": "Bearer",
+        "expiresAt": "2025-12-16T07:24:37.761Z",
+        "timestamp": "2025-12-16T06:24:37.761Z"
+      }
+    }
+  ],
+  
+  "data_fields": {
+    "Marka": "Marka adı (IPEKYOL)",
+    "Kategori": "Ürün kategorisi (TEKSTIL)",
+    "Life Style Grup": "Life style grubu (Business, Essential, Mono, Tema)",
+    "Ürün Alt Grup": "Ürün alt grubu (ELBISE, BLUZ, PANTOLON, vb.)",
+    "P_Opt": "Planlanan option sayısı",
+    "T_Opt": "Taslak option sayısı (havuzda bekleyen)",
+    "G_Opt": "Gerçekleşen option sayısı (koleksiyona alınan)",
+    "Fark": "P_Opt - G_Opt (hedeften sapma)",
+    "Oran": "Tamamlanma oranı (G_Opt / P_Opt * 100%)"
+  },
+  
+  "formulas": {
+    "Fark": "P_Opt - G_Opt",
+    "Oran": "(G_Opt / P_Opt) * 100%"
+  },
+  
+  "summary_statistics": {
+    "total_planned": 1094,
+    "total_actual": 838,
+    "total_draft": 134,
+    "overall_completion": "77%",
+    "total_rows": 53
+  }
+}
+
