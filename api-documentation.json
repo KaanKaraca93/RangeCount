@@ -101,6 +101,98 @@
         "expiresAt": "2025-12-16T07:24:37.761Z",
         "timestamp": "2025-12-16T06:24:37.761Z"
       }
+    },
+    {
+      "path": "/api/range-details",
+      "method": "GET",
+      "description": "Tüm range detay verilerini getir - Kumaş tipi bazında P_Opt, T_Opt, G_Opt, Fark, Oran detaylarını içerir (13 satır)",
+      "response_example": {
+        "success": true,
+        "count": 13,
+        "data": [
+          {
+            "Life Style Grup": "Business",
+            "Ürün Alt Grup": "ELBISE",
+            "Kumaş Tipi": "Dokuma",
+            "Açıklama": "",
+            "P_Opt": 9,
+            "T_Opt": 1,
+            "G_Opt": 5,
+            "Fark": 4,
+            "Oran": "56%"
+          }
+        ]
+      }
+    },
+    {
+      "path": "/api/range-details/detail/{lifeStyleGroup}/{productGroup}",
+      "method": "GET",
+      "description": "Belirli bir Life Style ve Ürün Alt Grup kombinasyonunun kumaş detayı",
+      "parameters": {
+        "lifeStyleGroup": "Business, Essential, Mono, Tema",
+        "productGroup": "ELBISE"
+      },
+      "example": "/api/range-details/detail/Mono/ELBISE",
+      "response_example": {
+        "success": true,
+        "lifeStyleGroup": "Mono",
+        "productGroup": "ELBISE",
+        "count": 4,
+        "data": [
+          {
+            "Life Style Grup": "Mono",
+            "Ürün Alt Grup": "ELBISE",
+            "Kumaş Tipi": "Dokuma",
+            "Açıklama": "",
+            "PLAN": 42
+          }
+        ]
+      }
+    },
+    {
+      "path": "/api/range-details/fabric/{type}",
+      "method": "GET",
+      "description": "Kumaş Tipi'ne göre filtrele",
+      "parameters": {
+        "type": "Dokuma, Triko, Örme, Kumaş Mix"
+      },
+      "example": "/api/range-details/fabric/Dokuma",
+      "response_example": {
+        "success": true,
+        "fabricType": "Dokuma",
+        "count": 4,
+        "data": []
+      }
+    },
+    {
+      "path": "/api/range-details/summary/fabric",
+      "method": "GET",
+      "description": "Kumaş tipi bazında özet istatistikler",
+      "response_example": {
+        "success": true,
+        "summary": [
+          {
+            "kumasTipi": "Dokuma",
+            "toplamPlan": 75,
+            "satirSayisi": 4
+          },
+          {
+            "kumasTipi": "Triko",
+            "toplamPlan": 7,
+            "satirSayisi": 3
+          },
+          {
+            "kumasTipi": "Kumaş Mix",
+            "toplamPlan": 15,
+            "satirSayisi": 4
+          },
+          {
+            "kumasTipi": "Örme",
+            "toplamPlan": 16,
+            "satirSayisi": 2
+          }
+        ]
+      }
     }
   ],
   
@@ -109,6 +201,8 @@
     "Kategori": "Ürün kategorisi (TEKSTIL)",
     "Life Style Grup": "Life style grubu (Business, Essential, Mono, Tema)",
     "Ürün Alt Grup": "Ürün alt grubu (ELBISE, BLUZ, PANTOLON, vb.)",
+    "Kumaş Tipi": "Kumaş/malzeme tipi (Dokuma, Triko, Örme, Kumaş Mix)",
+    "Açıklama": "Detay açıklama alanı",
     "P_Opt": "Planlanan option sayısı",
     "T_Opt": "Taslak option sayısı (havuzda bekleyen)",
     "G_Opt": "Gerçekleşen option sayısı (koleksiyona alınan)",
@@ -127,6 +221,13 @@
     "total_draft": 134,
     "overall_completion": "77%",
     "total_rows": 53
+  },
+  
+  "detail_data_info": {
+    "description": "Range detay verileri - Kumaş tipi ve açıklama bilgileri",
+    "total_detail_rows": 13,
+    "fabric_types": ["Dokuma", "Triko", "Örme", "Kumaş Mix"],
+    "sample_use_case": "ELBISE için Mono grubunda 42 Dokuma, 6 Örme, 1 Triko, 8 Kumaş Mix planlanmış"
   }
 }
 
