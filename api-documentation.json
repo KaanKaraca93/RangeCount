@@ -14,15 +14,15 @@
         "count": 53,
         "data": [
           {
-            "Marka": "IPEKYOL",
-            "Kategori": "TEKSTIL",
-            "Life Style Grup": "Business",
-            "Ürün Alt Grup": "BLAZER",
-            "P_Opt": 6,
-            "T_Opt": 2,
-            "G_Opt": 5,
-            "Fark": 1,
-            "Oran": "83%"
+            "marka": "IPEKYOL",
+            "kategori": "TEKSTIL",
+            "lifeStyleGrup": "Business",
+            "urunAltGrup": "BLAZER",
+            "pOpt": 6,
+            "tOpt": 2,
+            "gOpt": 5,
+            "fark": 1,
+            "oran": "83%"
           }
         ]
       }
@@ -111,15 +111,15 @@
         "count": 13,
         "data": [
           {
-            "Life Style Grup": "Business",
-            "Ürün Alt Grup": "ELBISE",
-            "Kumaş Tipi": "Dokuma",
-            "Açıklama": "",
-            "P_Opt": 9,
-            "T_Opt": 1,
-            "G_Opt": 5,
-            "Fark": 4,
-            "Oran": "56%"
+            "lifeStyleGrup": "Business",
+            "urunAltGrup": "ELBISE",
+            "kumasTipi": "Dokuma",
+            "aciklama": "",
+            "pOpt": 9,
+            "tOpt": 1,
+            "gOpt": 5,
+            "fark": 4,
+            "oran": "56%"
           }
         ]
       }
@@ -140,11 +140,11 @@
         "count": 4,
         "data": [
           {
-            "Life Style Grup": "Mono",
-            "Ürün Alt Grup": "ELBISE",
-            "Kumaş Tipi": "Dokuma",
-            "Açıklama": "",
-            "PLAN": 42
+            "lifeStyleGrup": "Mono",
+            "urunAltGrup": "ELBISE",
+            "kumasTipi": "Dokuma",
+            "aciklama": "",
+            "pOpt": 42
           }
         ]
       }
@@ -197,22 +197,22 @@
   ],
   
   "data_fields": {
-    "Marka": "Marka adı (IPEKYOL)",
-    "Kategori": "Ürün kategorisi (TEKSTIL)",
-    "Life Style Grup": "Life style grubu (Business, Essential, Mono, Tema)",
-    "Ürün Alt Grup": "Ürün alt grubu (ELBISE, BLUZ, PANTOLON, vb.)",
-    "Kumaş Tipi": "Kumaş/malzeme tipi (Dokuma, Triko, Örme, Kumaş Mix)",
-    "Açıklama": "Detay açıklama alanı",
-    "P_Opt": "Planlanan option sayısı",
-    "T_Opt": "Taslak option sayısı (havuzda bekleyen)",
-    "G_Opt": "Gerçekleşen option sayısı (koleksiyona alınan)",
-    "Fark": "P_Opt - G_Opt (hedeften sapma)",
-    "Oran": "Tamamlanma oranı (G_Opt / P_Opt * 100%)"
+    "marka": "Marka adı (IPEKYOL)",
+    "kategori": "Ürün kategorisi (TEKSTIL)",
+    "lifeStyleGrup": "Life style grubu (Business, Essential, Mono, Tema)",
+    "urunAltGrup": "Ürün alt grubu (ELBISE, BLUZ, PANTOLON, vb.)",
+    "kumasTipi": "Kumaş/malzeme tipi (Dokuma, Triko, Örme, Kumaş Mix)",
+    "aciklama": "Detay açıklama alanı",
+    "pOpt": "Planlanan option sayısı",
+    "tOpt": "Taslak option sayısı (havuzda bekleyen)",
+    "gOpt": "Gerçekleşen option sayısı (koleksiyona alınan)",
+    "fark": "pOpt - gOpt (hedeften sapma)",
+    "oran": "Tamamlanma oranı (gOpt / pOpt * 100%)"
   },
   
   "formulas": {
-    "Fark": "P_Opt - G_Opt",
-    "Oran": "(G_Opt / P_Opt) * 100%"
+    "fark": "pOpt - gOpt",
+    "oran": "(gOpt / pOpt) * 100%"
   },
   
   "summary_statistics": {

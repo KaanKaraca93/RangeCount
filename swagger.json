@@ -1,0 +1,424 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Ipekyol Range Sayaç API",
+    "version": "1.0.0",
+    "description": "PLM Range Planning & Tracking API - Koleksiyon planlama ve range takip sistemi",
+    "contact": {
+      "name": "Ipekyol PLM Team",
+      "email": "plm@ipekyol.com.tr"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://rangecount-652fcc1f20d9.herokuapp.com",
+      "description": "Production Server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Range Data",
+      "description": "Koleksiyon range verileri ve istatistikler"
+    },
+    {
+      "name": "Range Details",
+      "description": "Kumaş tipi bazında detaylı range verileri"
+    },
+    {
+      "name": "Token",
+      "description": "PLM OAuth2.0 token yönetimi"
+    }
+  ],
+  "paths": {
+    "/api/ranges": {
+      "get": {
+        "tags": ["Range Data"],
+        "summary": "Tüm range verilerini getir",
+        "description": "53 satır range verisi döndürür",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 53
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ranges/summary": {
+      "get": {
+        "tags": ["Range Data"],
+        "summary": "Özet istatistikler",
+        "description": "Genel ve grup bazında tamamlanma istatistikleri",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ranges/lifestyle/{group}": {
+      "get": {
+        "tags": ["Range Data"],
+        "summary": "Life Style Grup'a göre filtrele",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["Business", "Essential", "Mono", "Tema"]
+            },
+            "example": "Mono"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı"
+          }
+        }
+      }
+    },
+    "/api/ranges/product/{group}": {
+      "get": {
+        "tags": ["Range Data"],
+        "summary": "Ürün Alt Grup'a göre filtrele",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ELBISE"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı"
+          }
+        }
+      }
+    },
+    "/api/range-details": {
+      "get": {
+        "tags": ["Range Details"],
+        "summary": "Tüm range detay verilerini getir",
+        "description": "Kumaş tipi bazında 13 satır detay verisi",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 13
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeDetailData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/range-details/detail/{lifeStyleGroup}/{productGroup}": {
+      "get": {
+        "tags": ["Range Details"],
+        "summary": "Belirli grup kombinasyonunun detayı",
+        "parameters": [
+          {
+            "name": "lifeStyleGroup",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "Mono"
+          },
+          {
+            "name": "productGroup",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ELBISE"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı"
+          }
+        }
+      }
+    },
+    "/api/range-details/fabric/{type}": {
+      "get": {
+        "tags": ["Range Details"],
+        "summary": "Kumaş tipine göre filtrele",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["Dokuma", "Triko", "Örme", "Kumaş Mix"]
+            },
+            "example": "Dokuma"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı"
+          }
+        }
+      }
+    },
+    "/api/range-details/summary/fabric": {
+      "get": {
+        "tags": ["Range Details"],
+        "summary": "Kumaş tipi bazında özet",
+        "responses": {
+          "200": {
+            "description": "Başarılı"
+          }
+        }
+      }
+    },
+    "/api/token": {
+      "get": {
+        "tags": ["Token"],
+        "summary": "PLM Access Token Al",
+        "description": "OAuth2.0 access token döndürür",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "RangeData": {
+        "type": "object",
+        "properties": {
+          "marka": {
+            "type": "string",
+            "example": "IPEKYOL"
+          },
+          "kategori": {
+            "type": "string",
+            "example": "TEKSTIL"
+          },
+          "lifeStyleGrup": {
+            "type": "string",
+            "enum": ["Business", "Essential", "Mono", "Tema"],
+            "example": "Mono"
+          },
+          "urunAltGrup": {
+            "type": "string",
+            "example": "ELBISE"
+          },
+          "pOpt": {
+            "type": "integer",
+            "description": "Planlanan option sayısı",
+            "example": 56
+          },
+          "tOpt": {
+            "type": "integer",
+            "description": "Taslak option sayısı",
+            "example": 4
+          },
+          "gOpt": {
+            "type": "integer",
+            "description": "Gerçekleşen option sayısı",
+            "example": 53
+          },
+          "fark": {
+            "type": "integer",
+            "description": "pOpt - gOpt",
+            "example": 3
+          },
+          "oran": {
+            "type": "string",
+            "description": "Tamamlanma oranı",
+            "example": "95%"
+          }
+        }
+      },
+      "RangeDetailData": {
+        "type": "object",
+        "properties": {
+          "lifeStyleGrup": {
+            "type": "string",
+            "example": "Mono"
+          },
+          "urunAltGrup": {
+            "type": "string",
+            "example": "ELBISE"
+          },
+          "kumasTipi": {
+            "type": "string",
+            "enum": ["Dokuma", "Triko", "Örme", "Kumaş Mix"],
+            "example": "Dokuma"
+          },
+          "aciklama": {
+            "type": "string"
+          },
+          "pOpt": {
+            "type": "integer",
+            "example": 42
+          },
+          "tOpt": {
+            "type": "integer",
+            "example": 2
+          },
+          "gOpt": {
+            "type": "integer",
+            "example": 34
+          },
+          "fark": {
+            "type": "integer",
+            "example": 8
+          },
+          "oran": {
+            "type": "string",
+            "example": "81%"
+          }
+        }
+      },
+      "SummaryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "object",
+            "properties": {
+              "genel": {
+                "type": "object",
+                "properties": {
+                  "toplamPlanlanan": {
+                    "type": "integer",
+                    "example": 1094
+                  },
+                  "toplamGerceklesen": {
+                    "type": "integer",
+                    "example": 838
+                  },
+                  "toplamTaslak": {
+                    "type": "integer",
+                    "example": 134
+                  },
+                  "toplamFark": {
+                    "type": "integer",
+                    "example": 256
+                  },
+                  "genelTamamlanma": {
+                    "type": "string",
+                    "example": "77%"
+                  }
+                }
+              },
+              "grupBazinda": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "grup": {
+                      "type": "string"
+                    },
+                    "planlanan": {
+                      "type": "integer"
+                    },
+                    "gerceklesen": {
+                      "type": "integer"
+                    },
+                    "fark": {
+                      "type": "integer"
+                    },
+                    "tamamlanma": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    }
+  }
+}
+

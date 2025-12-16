@@ -63,15 +63,15 @@ class RangeDataService {
     const Oran = P_Opt > 0 ? Math.round((G_Opt / P_Opt) * 100) : 0;
 
     return {
-      Marka: row.Marka,
-      Kategori: row.Kategori,
-      'Life Style Grup': row['Life Style Grup'],
-      'Ürün Alt Grup': row['Ürün Alt Grup'],
-      P_Opt: P_Opt,
-      T_Opt: T_Opt,
-      G_Opt: G_Opt,
-      Fark: Fark,
-      Oran: `${Oran}%`
+      marka: row.Marka,
+      kategori: row.Kategori,
+      lifeStyleGrup: row['Life Style Grup'],
+      urunAltGrup: row['Ürün Alt Grup'],
+      pOpt: P_Opt,
+      tOpt: T_Opt,
+      gOpt: G_Opt,
+      fark: Fark,
+      oran: `${Oran}%`
     };
   }
 
@@ -86,31 +86,31 @@ class RangeDataService {
    * Life Style Grup'a göre filtrele
    */
   getByLifeStyleGroup(group) {
-    return this.data.filter(row => row['Life Style Grup'] === group);
+    return this.data.filter(row => row.lifeStyleGrup === group);
   }
 
   /**
    * Ürün Alt Grup'a göre filtrele
    */
   getByProductGroup(group) {
-    return this.data.filter(row => row['Ürün Alt Grup'] === group);
+    return this.data.filter(row => row.urunAltGrup === group);
   }
 
   /**
    * Özet istatistikler
    */
   getSummary() {
-    const totalPOpt = this.data.reduce((sum, row) => sum + row.P_Opt, 0);
-    const totalGOpt = this.data.reduce((sum, row) => sum + parseInt(row.G_Opt), 0);
-    const totalTOpt = this.data.reduce((sum, row) => sum + row.T_Opt, 0);
+    const totalPOpt = this.data.reduce((sum, row) => sum + row.pOpt, 0);
+    const totalGOpt = this.data.reduce((sum, row) => sum + parseInt(row.gOpt), 0);
+    const totalTOpt = this.data.reduce((sum, row) => sum + row.tOpt, 0);
     const overallCompletion = totalPOpt > 0 ? Math.round((totalGOpt / totalPOpt) * 100) : 0;
 
     // Life Style Grup bazında özet
-    const lifeStyleGroups = [...new Set(this.data.map(row => row['Life Style Grup']))];
+    const lifeStyleGroups = [...new Set(this.data.map(row => row.lifeStyleGrup))];
     const groupSummaries = lifeStyleGroups.map(group => {
       const groupData = this.getByLifeStyleGroup(group);
-      const groupPOpt = groupData.reduce((sum, row) => sum + row.P_Opt, 0);
-      const groupGOpt = groupData.reduce((sum, row) => sum + parseInt(row.G_Opt), 0);
+      const groupPOpt = groupData.reduce((sum, row) => sum + row.pOpt, 0);
+      const groupGOpt = groupData.reduce((sum, row) => sum + parseInt(row.gOpt), 0);
       const completion = groupPOpt > 0 ? Math.round((groupGOpt / groupPOpt) * 100) : 0;
 
       return {
