@@ -81,6 +81,36 @@ class PlmThemeService {
         return this.calculateThemeRow(themeTarget, plmStyles);
       });
       
+      // Sezon Ortalaması ekle
+      const totalPOpt = results.reduce((sum, row) => sum + row.pOpt, 0);
+      const totalGOpt = results.reduce((sum, row) => sum + row.gOpt, 0);
+      const totalTOpt = results.reduce((sum, row) => sum + row.tOpt, 0);
+      const totalFark = totalPOpt - totalGOpt;
+      const avgOran = totalPOpt > 0 ? Math.round((totalGOpt / totalPOpt) * 100) : 0;
+      
+      results.push({
+        temaAdi: "SezonOrtalaması",
+        temaId: null,
+        pOpt: totalPOpt,
+        tOpt: totalTOpt,
+        gOpt: totalGOpt,
+        fark: totalFark,
+        oran: `${avgOran}%`
+      });
+      
+      // Referans ekle (%100 tamamlanma)
+      // pOpt = gOpt olacak şekilde dummy bir değer
+      const referansPOpt = 100;
+      results.push({
+        temaAdi: "Referans",
+        temaId: null,
+        pOpt: referansPOpt,
+        tOpt: 0,
+        gOpt: referansPOpt,
+        fark: 0,
+        oran: "100%"
+      });
+      
       return results;
       
     } catch (error) {
