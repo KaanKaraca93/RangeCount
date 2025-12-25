@@ -6,6 +6,9 @@ const tokenRoutes = require('./routes/token.routes');
 const rangeRoutes = require('./routes/range.routes');
 const rangeDetailRoutes = require('./routes/rangeDetail.routes');
 const plmStyleRoutes = require('./routes/plmStyle.routes');
+const plmRangeRoutes = require('./routes/plmRange.routes');
+const plmThemeRoutes = require('./routes/plmTheme.routes');
+const bannerRoutes = require('./routes/banner.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -25,6 +28,9 @@ app.use('/api', tokenRoutes);
 app.use('/api', rangeRoutes);
 app.use('/api', rangeDetailRoutes);
 app.use('/api', plmStyleRoutes);
+app.use('/api', plmRangeRoutes);
+app.use('/api', plmThemeRoutes);
+app.use('/api', bannerRoutes);
 
 // Health check endpoint
 app.get('/', (req, res) => {
@@ -49,7 +55,12 @@ app.get('/', (req, res) => {
       rangeDetailsSpecific: '/api/range-details/detail/:lifeStyleGroup/:productGroup',
       rangeDetailsFabricSummary: '/api/range-details/summary/fabric',
       pastSeasonData: 'GET /api/past-season-data',
-      plmStyle: '/api/plm-style/:styleId'
+      plmStyle: '/api/plm-style/:styleId',
+      plmRanges: 'GET /api/plm-ranges',
+      plmRangesSummary: 'GET /api/plm-ranges/summary',
+      plmThemes: 'GET /api/plm-themes',
+      plmThemesSummary: 'GET /api/plm-themes/summary',
+      banner: 'GET /api/banner'
     }
   });
 });
@@ -80,6 +91,14 @@ app.listen(PORT, () => {
   console.log(`\n🎨 PLM Style & Past Season Data:`);
   console.log(`   GET  /api/past-season-data                          - Get random past season data (POC)`);
   console.log(`   GET  /api/plm-style/:styleId                        - Get PLM style info (test)`);
+  console.log(`\n🔥 PLM Real Range Data:`);
+  console.log(`   GET  /api/plm-ranges                                - Get real ranges from PLM`);
+  console.log(`   GET  /api/plm-ranges/summary                        - Get PLM range summary`);
+  console.log(`\n🎨 PLM Theme Data:`);
+  console.log(`   GET  /api/plm-themes                                - Get real themes from PLM`);
+  console.log(`   GET  /api/plm-themes/summary                        - Get PLM theme summary`);
+  console.log(`\n📊 Banner Metrics:`);
+  console.log(`   GET  /api/banner                                    - Get summary metrics for banner`);
 });
 
 module.exports = app;

@@ -29,6 +29,18 @@
       "description": "PLM'den style ve geçen sezon verileri"
     },
     {
+      "name": "PLM Range Data",
+      "description": "PLM'den gerçek ürün kategorisi range verileri"
+    },
+    {
+      "name": "PLM Theme Data",
+      "description": "PLM'den gerçek tema bazlı veriler"
+    },
+    {
+      "name": "Banner",
+      "description": "Banner için özet metrikler"
+    },
+    {
       "name": "Token",
       "description": "PLM OAuth2.0 token yönetimi"
     }
@@ -316,6 +328,211 @@
         "responses": {
           "200": {
             "description": "Başarılı"
+          }
+        }
+      }
+    },
+    "/api/plm-ranges": {
+      "get": {
+        "tags": ["PLM Range Data"],
+        "summary": "PLM'den gerçek range verilerini getir",
+        "description": "Excel plan verileri ile PLM gerçek verilerini eşleştirip hesaplar",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "marka": {
+                            "type": "string"
+                          },
+                          "kategori": {
+                            "type": "string"
+                          },
+                          "lifeStyleGrup": {
+                            "type": "string"
+                          },
+                          "urunAltGrup": {
+                            "type": "string"
+                          },
+                          "pOpt": {
+                            "type": "integer"
+                          },
+                          "tOpt": {
+                            "type": "integer"
+                          },
+                          "gOpt": {
+                            "type": "integer"
+                          },
+                          "fark": {
+                            "type": "integer"
+                          },
+                          "oran": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plm-ranges/summary": {
+      "get": {
+        "tags": ["PLM Range Data"],
+        "summary": "PLM range özet istatistikleri",
+        "description": "Genel ve grup bazında tamamlanma istatistikleri",
+        "responses": {
+          "200": {
+            "description": "Başarılı"
+          }
+        }
+      }
+    },
+    "/api/plm-themes": {
+      "get": {
+        "tags": ["PLM Theme Data"],
+        "summary": "PLM'den gerçek tema verilerini getir",
+        "description": "Excel tema hedefleri ile PLM gerçek verilerini eşleştirip hesaplar",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "temaAdi": {
+                            "type": "string"
+                          },
+                          "temaId": {
+                            "type": "integer"
+                          },
+                          "pOpt": {
+                            "type": "integer"
+                          },
+                          "tOpt": {
+                            "type": "integer"
+                          },
+                          "gOpt": {
+                            "type": "integer"
+                          },
+                          "fark": {
+                            "type": "integer"
+                          },
+                          "oran": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/plm-themes/summary": {
+      "get": {
+        "tags": ["PLM Theme Data"],
+        "summary": "PLM tema özet istatistikleri",
+        "description": "Genel tema tamamlanma istatistikleri",
+        "responses": {
+          "200": {
+            "description": "Başarılı"
+          }
+        }
+      }
+    },
+    "/api/banner": {
+      "get": {
+        "tags": ["Banner"],
+        "summary": "Banner için özet metrikleri",
+        "description": "Ürün kategorisi ve tema bazlı tamamlanma metriklerini döner",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "urunKategorisi": {
+                          "type": "object",
+                          "properties": {
+                            "toplamPOpt": {
+                              "type": "integer"
+                            },
+                            "toplamGOpt": {
+                              "type": "integer"
+                            },
+                            "fark": {
+                              "type": "integer"
+                            },
+                            "tamamlanmaOrani": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "tema": {
+                          "type": "object",
+                          "properties": {
+                            "toplamPOpt": {
+                              "type": "integer"
+                            },
+                            "toplamGOpt": {
+                              "type": "integer"
+                            },
+                            "fark": {
+                              "type": "integer"
+                            },
+                            "tamamlanmaOrani": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
