@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3007/api';
+const BASE_URL = 'http://localhost:3011/api';
 
 async function testBanner() {
   console.log('🧪 Testing Banner API...\n');

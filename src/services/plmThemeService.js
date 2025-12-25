@@ -178,11 +178,15 @@ class PlmThemeService {
 
   /**
    * Tema özet istatistikleri
+   * SezonOrtalaması ve Referans kayıtlarını hariç tutar
    */
   calculateSummary(themeData) {
-    const totalPOpt = themeData.reduce((sum, row) => sum + row.pOpt, 0);
-    const totalGOpt = themeData.reduce((sum, row) => sum + row.gOpt, 0);
-    const totalTOpt = themeData.reduce((sum, row) => sum + row.tOpt, 0);
+    // Sadece gerçek temaları filtrele (temaId != null olanlar)
+    const realThemes = themeData.filter(row => row.temaId !== null);
+    
+    const totalPOpt = realThemes.reduce((sum, row) => sum + row.pOpt, 0);
+    const totalGOpt = realThemes.reduce((sum, row) => sum + row.gOpt, 0);
+    const totalTOpt = realThemes.reduce((sum, row) => sum + row.tOpt, 0);
     const overallCompletion = totalPOpt > 0 ? Math.round((totalGOpt / totalPOpt) * 100) : 0;
 
     return {
@@ -191,7 +195,7 @@ class PlmThemeService {
       toplamTaslak: totalTOpt,
       toplamFark: totalPOpt - totalGOpt,
       genelTamamlanma: `${overallCompletion}%`,
-      temaSayisi: themeData.length
+      temaSayisi: realThemes.length
     };
   }
 }

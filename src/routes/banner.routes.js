@@ -32,9 +32,10 @@ router.get('/banner', async (req, res) => {
       ? Math.round((totalRangeGOpt / totalRangePOpt) * 100) 
       : 0;
     
-    // Theme (Tema) metrikleri
-    const totalThemePOpt = themeData.reduce((sum, row) => sum + row.pOpt, 0);
-    const totalThemeGOpt = themeData.reduce((sum, row) => sum + row.gOpt, 0);
+    // Theme (Tema) metrikleri - Sadece gerçek temaları al (temaId != null)
+    const realThemes = themeData.filter(row => row.temaId !== null);
+    const totalThemePOpt = realThemes.reduce((sum, row) => sum + row.pOpt, 0);
+    const totalThemeGOpt = realThemes.reduce((sum, row) => sum + row.gOpt, 0);
     const themeFark = totalThemePOpt - totalThemeGOpt;
     const themeCompletionRate = totalThemePOpt > 0 
       ? Math.round((totalThemeGOpt / totalThemePOpt) * 100) 

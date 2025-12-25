@@ -1,6 +1,6 @@
 const axios = require('axios');
 
-const BASE_URL = 'http://localhost:3009/api';
+const BASE_URL = 'http://localhost:3010/api';
 
 async function testPlmThemes() {
   console.log('🧪 Testing PLM Theme API...\n');
