@@ -104,21 +104,15 @@
     },
     {
       "path": "/api/past-season-data",
-      "method": "POST",
-      "description": "StyleId ile PLM'den geçen sezon verilerini getir - UDF7 kontrolü yapar",
-      "request_body": {
-        "StyleId": 158
-      },
+      "method": "GET",
+      "description": "Random geçen sezon verileri getir - POC için (PLM'e bağlanmaz)",
       "response_example": {
         "success": true,
-        "styleId": 158,
-        "styleCode": "IS1260002101",
-        "previousSeasonStyleCode": "IS1160002101",
-        "hasData": true,
         "data": {
-          "sellout": 245,
+          "sellout": 214,
           "markdown": 25.5,
           "ros": 82.3,
+          "salesPerformance": "excellent",
           "fobCostUSD": 42.75,
           "fabricCost": 22.30,
           "trimCost": 4.20,
@@ -126,7 +120,7 @@
           "embroideryCost": 3.75
         }
       },
-      "note": "UDF7 (UserDefinedField7Id) boş ise tüm data değerleri 0 döner"
+      "note": "Her istekte farklı random değerler döner. FOB = Fabric + Trim + Labor + Embroidery"
     },
     {
       "path": "/api/range-details",
@@ -256,17 +250,14 @@
     "sample_use_case": "ELBISE için Mono grubunda 42 Dokuma, 6 Örme, 1 Triko, 8 Kumaş Mix planlanmış"
   },
   
-  "plm_integration": {
-    "description": "PLM'den gerçek zamanlı veri çekme - OAuth2.0 token ile",
-    "endpoint": "POST /api/past-season-data",
-    "input": {
-      "StyleId": "PLM'deki style ID"
-    },
-    "logic": {
-      "step1": "PLM'den Style bilgisi çek (StyleId, StyleCode, UDF7)",
-      "step2": "UDF7 kontrolü yap",
-      "if_udf7_empty": "Tüm cost ve sales verileri 0 döner",
-      "if_udf7_filled": "Geçen sezon için random veriler oluştur (POC için)"
+  "past_season_data_logic": {
+    "description": "Random geçen sezon verileri - POC için basitleştirilmiş",
+    "endpoint": "GET /api/past-season-data",
+    "logic": "PLM'e bağlanmadan direkt random değerler üretir",
+    "realistic_rules": {
+      "fob": "FOB = Fabric + Trim + Labor + Embroidery",
+      "ros_markdown": "Yüksek ROS = Düşük Markdown (iyi satan ürün)",
+      "sellout": "ROS'a göre hesaplanır"
     },
     "cost_fields": [
       "fobCostUSD",
@@ -278,8 +269,17 @@
     "sales_fields": [
       "sellout",
       "markdown",
-      "ros"
-    ]
+      "ros",
+      "salesPerformance"
+    ],
+    "performance_labels": {
+      "best": "ROS ≥ 85% ve Markdown ≤ 20% - Çok iyi satıyor",
+      "excellent": "ROS ≥ 80% ve Markdown ≤ 25% - Mükemmel",
+      "good": "ROS ≥ 75% ve Markdown ≤ 30% - İyi",
+      "average": "ROS ≥ 70% ve Markdown ≤ 35% - Orta",
+      "below average": "ROS ≥ 65% - Orta altı",
+      "poor": "ROS < 65% - Kötü performans"
+    }
   }
 }
 

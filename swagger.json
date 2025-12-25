@@ -233,40 +233,67 @@
       }
     },
     "/api/past-season-data": {
-      "post": {
+      "get": {
         "tags": ["PLM Style Data"],
-        "summary": "Geçen sezon verilerini getir",
-        "description": "StyleId ile PLM'den UDF7 kontrolü yaparak geçen sezon verilerini döndürür. UDF7 boş ise tüm değerler 0, dolu ise random veriler oluşturulur.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": ["StyleId"],
-                "properties": {
-                  "StyleId": {
-                    "type": "integer",
-                    "example": 158
-                  }
-                }
-              }
-            }
-          }
-        },
+        "summary": "Geçen sezon verilerini getir (Random POC)",
+        "description": "POC için random geçen sezon verileri döndürür. PLM'e bağlanmaz, her istekte farklı random değerler üretir.",
         "responses": {
           "200": {
             "description": "Başarılı",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PastSeasonResponse"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "sellout": {
+                          "type": "integer",
+                          "description": "Satış adedi"
+                        },
+                        "markdown": {
+                          "type": "number",
+                          "description": "İndirim oranı %"
+                        },
+                        "ros": {
+                          "type": "number",
+                          "description": "Rate of Sale %"
+                        },
+                        "salesPerformance": {
+                          "type": "string",
+                          "enum": ["best", "excellent", "good", "average", "below average", "poor"],
+                          "description": "Satış performans etiketi"
+                        },
+                        "fobCostUSD": {
+                          "type": "number",
+                          "description": "FOB maliyet (USD)"
+                        },
+                        "fabricCost": {
+                          "type": "number",
+                          "description": "Kumaş maliyeti (USD)"
+                        },
+                        "trimCost": {
+                          "type": "number",
+                          "description": "Aksesuar maliyeti (USD)"
+                        },
+                        "laborCost": {
+                          "type": "number",
+                          "description": "İşçilik maliyeti (USD)"
+                        },
+                        "embroideryCost": {
+                          "type": "number",
+                          "description": "Nakış maliyeti (USD)"
+                        }
+                      }
+                    }
+                  }
                 }
               }
             }
-          },
-          "404": {
-            "description": "Style bulunamadı"
           }
         }
       }

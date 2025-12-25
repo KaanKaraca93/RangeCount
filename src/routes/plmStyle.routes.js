@@ -5,22 +5,10 @@ const plmStyleService = require('../services/plmStyleService');
 /**
  * @swagger
  * /api/past-season-data:
- *   post:
- *     summary: Geçen sezon verilerini getir
- *     description: StyleId ile PLM'den UDF7 kontrolü yaparak geçen sezon verilerini döndürür
+ *   get:
+ *     summary: Geçen sezon verilerini getir (Random POC Data)
+ *     description: POC için random geçen sezon verileri döndürür - PLM'e bağlanmaz
  *     tags: [PLM Style Data]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - StyleId
- *             properties:
- *               StyleId:
- *                 type: integer
- *                 example: 158
  *     responses:
  *       200:
  *         description: Başarılı
@@ -31,32 +19,14 @@ const plmStyleService = require('../services/plmStyleService');
  *               properties:
  *                 success:
  *                   type: boolean
- *                 styleId:
- *                   type: integer
- *                 styleCode:
- *                   type: string
- *                 previousSeasonStyleCode:
- *                   type: string
- *                 hasData:
- *                   type: boolean
  *                 data:
  *                   type: object
  */
-router.post('/past-season-data', async (req, res) => {
+router.get('/past-season-data', async (req, res) => {
   try {
-    const { StyleId } = req.body;
+    console.log(`🔍 Geçen sezon verisi isteniyor (Random POC)`);
     
-    if (!StyleId) {
-      return res.status(400).json({
-        success: false,
-        error: 'StyleId is required',
-        message: 'Request body must contain StyleId field'
-      });
-    }
-    
-    console.log(`🔍 Geçen sezon verisi isteniyor: StyleId=${StyleId}`);
-    
-    const pastSeasonData = await plmStyleService.getPastSeasonData(StyleId);
+    const pastSeasonData = plmStyleService.generateRandomPastSeasonData();
     
     res.json({
       success: true,
@@ -65,17 +35,6 @@ router.post('/past-season-data', async (req, res) => {
     
   } catch (error) {
     console.error('Error getting past season data:', error);
-    
-    // Style bulunamadı
-    if (error.message.includes('Style not found')) {
-      return res.status(404).json({
-        success: false,
-        error: 'Style not found',
-        message: error.message
-      });
-    }
-    
-    // Diğer hatalar
     res.status(500).json({
       success: false,
       error: 'Failed to get past season data',

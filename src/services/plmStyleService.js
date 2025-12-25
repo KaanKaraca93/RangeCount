@@ -130,6 +130,68 @@ class PlmStyleService {
   }
   
   /**
+   * Random geçen sezon verisi oluştur (PLM'siz - POC için)
+   * @returns {Object} Random geçen sezon verisi
+   */
+  generateRandomPastSeasonData() {
+    console.log('✅ Random POC verisi oluşturuluyor (PLM bağlantısı yok)');
+    
+    // Maliyetleri hesapla (FOB = tümünün toplamı)
+    const fabricCost = this.randomDecimal(15, 35);        // Kumaş: en büyük maliyet
+    const laborCost = this.randomDecimal(8, 18);          // İşçilik
+    const trimCost = this.randomDecimal(2, 6);            // Aksesuar
+    const embroideryCost = this.randomDecimal(0, 5);      // Nakış (opsiyonel)
+    const fobCostUSD = parseFloat((fabricCost + laborCost + trimCost + embroideryCost).toFixed(2));
+    
+    // ROS (Rate of Sale) belirle - tekstil perakendeciliğinde %65-90 arası normal
+    const ros = this.randomDecimal(65, 90);
+    
+    // Markdown - ROS ile ters orantılı
+    let markdown;
+    if (ros >= 85) {
+      markdown = this.randomDecimal(5, 20);      // Çok iyi satıyor, az indirim
+    } else if (ros >= 75) {
+      markdown = this.randomDecimal(15, 30);     // İyi satıyor, orta indirim
+    } else {
+      markdown = this.randomDecimal(25, 45);     // Zor satıyor, yüksek indirim
+    }
+    
+    // Sellout - ROS'a göre belirle
+    const baseQty = this.randomInt(100, 300);
+    const sellout = Math.round(baseQty * (ros / 100));
+    
+    // Satış performansını etiketle
+    let salesPerformance;
+    if (ros >= 85 && markdown <= 20) {
+      salesPerformance = 'best';        // Çok iyi satıyor, az indirim
+    } else if (ros >= 80 && markdown <= 25) {
+      salesPerformance = 'excellent';   // Mükemmel performans
+    } else if (ros >= 75 && markdown <= 30) {
+      salesPerformance = 'good';        // İyi performans
+    } else if (ros >= 70 && markdown <= 35) {
+      salesPerformance = 'average';     // Orta performans
+    } else if (ros >= 65) {
+      salesPerformance = 'below average'; // Orta altı
+    } else {
+      salesPerformance = 'poor';        // Kötü performans
+    }
+    
+    return {
+      data: {
+        sellout: sellout,
+        markdown: markdown,
+        ros: ros,
+        salesPerformance: salesPerformance,
+        fobCostUSD: fobCostUSD,
+        fabricCost: fabricCost,
+        trimCost: trimCost,
+        laborCost: laborCost,
+        embroideryCost: embroideryCost
+      }
+    };
+  }
+  
+  /**
    * Random integer oluştur
    */
   randomInt(min, max) {

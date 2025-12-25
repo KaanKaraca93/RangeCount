@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
       rangeDetailsFabric: '/api/range-details/fabric/:type',
       rangeDetailsSpecific: '/api/range-details/detail/:lifeStyleGroup/:productGroup',
       rangeDetailsFabricSummary: '/api/range-details/summary/fabric',
-      pastSeasonData: 'POST /api/past-season-data',
+      pastSeasonData: 'GET /api/past-season-data',
       plmStyle: '/api/plm-style/:styleId'
     }
   });
@@ -78,7 +78,7 @@ app.listen(PORT, () => {
   console.log(`   GET  /api/range-details/detail/:lifestyle/:product  - Specific detail`);
   console.log(`   GET  /api/range-details/summary/fabric              - Fabric summary`);
   console.log(`\n🎨 PLM Style & Past Season Data:`);
-  console.log(`   POST /api/past-season-data                          - Get past season data by StyleId`);
+  console.log(`   GET  /api/past-season-data                          - Get random past season data (POC)`);
   console.log(`   GET  /api/plm-style/:styleId                        - Get PLM style info (test)`);
 });
 
