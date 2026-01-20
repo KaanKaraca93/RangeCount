@@ -61,7 +61,7 @@ const PLM_CONFIG = {
   eventVersion: 'V1480769020',
   
   // Season ID for filtering
-  seasonId: process.env.PLM_SEASON_ID || 1
+  seasonId: process.env.PLM_SEASON_ID || 10
 };
 
 // Log current environment
