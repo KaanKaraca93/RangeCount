@@ -1,13 +1,16 @@
 # Ipekyol Range Sayaç - PLM Integration
 
-Node.js projesi ile Infor PLM/ION API entegrasyonu.
+Node.js projesi ile Infor PLM/ION API entegrasyonu. Range (koleksiyon) tamamlanma oranlarını izlemek için POC uygulaması.
 
 ## Özellikler
 
-- ✅ OAuth2.0 token yönetimi
+- ✅ OAuth2.0 token yönetimi (Test & Production ortamları)
 - ✅ Otomatik token cache'leme
 - ✅ Token yenileme mekanizması
-- ✅ Aynı tenant ve credentials ile PLM'e bağlanma
+- ✅ PLM'den gerçek zamanlı kategori ve tema bazlı range hesaplaması
+- ✅ Excel bazlı statik veri API'leri
+- ✅ Swagger/OpenAPI dokümantasyonu
+- ✅ Geçmiş sezon verisi simülasyonu
 
 ## Kurulum
 
@@ -24,39 +27,77 @@ npm run dev
 
 ## API Endpoints
 
-### Token İşlemleri
+Tüm endpoint'lerin detaylı dökümantasyonu için: **[/api-docs](https://rangecount-652fcc1f20d9.herokuapp.com/api-docs)**
 
-#### Token Al
+### 📊 Range API'leri
+
+#### Statik Kategori Verileri (Excel)
 ```bash
-GET /api/token
+GET /api/ranges
+GET /api/ranges/summary
+GET /api/ranges/lifestyle/:group
+GET /api/ranges/product/:group
 ```
-Geçerli bir access token döner (cache'den veya yeni).
 
-#### Token Bilgisi
+#### Statik Detay Verileri (Excel)
 ```bash
-GET /api/token/info
+GET /api/range-details
+GET /api/range-details/summary/fabric
+GET /api/range-details/lifestyle/:group
 ```
-Token durumu ve bilgilerini döner (token'ı göstermeden).
 
-#### Token Yenile
+#### Dinamik PLM Kategori Verileri
 ```bash
-POST /api/token/refresh
+GET /api/plm-ranges          # RangeSayacv2.xlsx → PLM eşleştirme
+GET /api/plm-ranges/summary
 ```
-Mevcut token'ı iptal edip yeni token alır.
 
-#### Token İptal Et
+#### Dinamik PLM Tema Verileri
 ```bash
-POST /api/token/revoke
+GET /api/plm-themes          # RangeSayacv3.xlsx → PLM eşleştirme
+GET /api/plm-themes/summary  # SezonOrtalaması ve Referans kayıtları hariç
 ```
-Mevcut token'ı iptal eder.
 
-## Konfigürasyon
+#### Banner Özet Metrikleri
+```bash
+GET /api/banner              # Kategori + Tema özeti
+```
+
+#### Geçmiş Sezon Verileri
+```bash
+GET /api/past-season-data    # Random, gerçekçi geçmiş sezon metrikleri
+```
+
+### 🔐 Token İşlemleri
+
+```bash
+GET  /api/token              # Token al
+GET  /api/token/info         # Token durumu
+POST /api/token/refresh      # Token yenile
+POST /api/token/revoke       # Token iptal et
+```
+
+## 🔧 Konfigürasyon
 
 PLM bağlantı ayarları `src/config/plm.config.js` dosyasında:
 
+### Test Ortamı (Varsayılan)
 - **Tenant ID**: ATJZAMEWEF5P4SNV_TST
+- **Season ID**: 1
 - **ION API URL**: https://mingle-ionapi.eu1.inforcloudsuite.com
-- **Provider URL**: https://mingle-sso.eu1.inforcloudsuite.com:443/ATJZAMEWEF5P4SNV_TST/as/
+
+### Production Ortamı
+- **Tenant ID**: ATJZAMEWEF5P4SNV_PRD
+- **Season ID**: 1
+- **ION API URL**: https://mingle-ionapi.eu1.inforcloudsuite.com
+
+**Production'a geçmek için:**
+```bash
+# Heroku'da
+heroku config:set NODE_ENV=production --app rangecount-652fcc1f20d9
+```
+
+Detaylı deployment bilgisi için: **[DEPLOYMENT.md](./DEPLOYMENT.md)**
 
 ## Token Servisi Kullanımı
 

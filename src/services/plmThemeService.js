@@ -38,9 +38,9 @@ class PlmThemeService {
     try {
       const authHeader = await tokenService.getAuthorizationHeader();
       
-      const url = `${PLM_CONFIG.ionApiUrl}/ATJZAMEWEF5P4SNV_TST/FASHIONPLM/odata2/api/odata2/Style`;
+      const url = `${PLM_CONFIG.ionApiUrl}/${PLM_CONFIG.tenantId}/FASHIONPLM/odata2/api/odata2/Style`;
       const params = {
-        '$filter': 'SeasonId eq 1 and Status ne 103',
+        '$filter': `SeasonId eq ${PLM_CONFIG.seasonId} and Status ne 103`,
         '$select': 'StyleId,StyleCode,BrandId,DivisionId,ProductSubSubCategoryId,Status,SeasonId',
         '$expand': 'StyleColorways($select=Code,Name,ColorwayUserField4,ThemeId)'
       };
