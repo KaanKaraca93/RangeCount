@@ -42,7 +42,7 @@ class PlmThemeService {
       const params = {
         '$filter': `SeasonId eq ${PLM_CONFIG.seasonId} and Status ne 103`,
         '$select': 'StyleId,StyleCode,BrandId,DivisionId,ProductSubSubCategoryId,Status,SeasonId',
-        '$expand': 'StyleColorways($select=Code,Name,ColorwayUserField4,ThemeId)'
+        '$expand': 'StyleColorways($select=Code,Name,ColorwayUserField4,ThemeId,FreeFieldOne,ColorwayStatus)'
       };
       
       console.log(`📞 PLM'den tema ile style verileri çekiliyor...`);
@@ -140,6 +140,21 @@ class PlmThemeService {
 
           // Tema eşleşmesi
           if (colorway.ThemeId !== Tema_Id) {
+            continue;
+          }
+
+          // 🚫 ColorwayStatus = 4 olanları hariç tut (iptal)
+          if (colorway.ColorwayStatus === 4) {
+            continue;
+          }
+
+          // 🚫 ThemeId = 1172 olanları hariç tut (iptal)
+          if (colorway.ThemeId === 1172) {
+            continue;
+          }
+
+          // 🚫 FreeFieldOne = 'B' olmayanları hariç tut (cluster takibi)
+          if (colorway.FreeFieldOne !== 'B') {
             continue;
           }
 
