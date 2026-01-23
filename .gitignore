@@ -32,3 +32,6 @@ coverage/
 dist/
 build/
 
+# Excel temp files
+~$*.xlsx
+~$*.xls

@@ -44,7 +44,7 @@ class PlmDClusterService {
       const url = `${PLM_CONFIG.ionApiUrl}/${PLM_CONFIG.tenantId}/FASHIONPLM/odata2/api/odata2/Style`;
       const params = {
         '$filter': `SeasonId eq ${PLM_CONFIG.seasonId} and Status ne 103`,
-        '$select': 'StyleId,StyleCode,BrandId,DivisionId,ProductSubCategoryId,ProductSubSubCategoryId,Status,SeasonId',
+        '$select': 'StyleId,StyleCode,BrandId,DivisionId,SubCategoryId,ProductSubSubCategoryId,Status,SeasonId',
         '$expand': 'StyleColorways($select=Code,Name,ColorwayUserField4,ThemeId,FreeFieldOne,ColorwayStatus)'
       };
       
@@ -131,7 +131,7 @@ class PlmDClusterService {
     // PLM'deki her style için
     for (const style of plmStyles) {
       // SubCategoryId kontrolü
-      if (style.ProductSubCategoryId !== SubCategoryId) {
+      if (style.SubCategoryId !== SubCategoryId) {
         continue;
       }
 
@@ -146,7 +146,7 @@ class PlmDClusterService {
           // Null kontrolleri
           if (style.BrandId === null || style.BrandId === undefined ||
               style.DivisionId === null || style.DivisionId === undefined ||
-              style.ProductSubCategoryId === null || style.ProductSubCategoryId === undefined ||
+              style.SubCategoryId === null || style.SubCategoryId === undefined ||
               style.ProductSubSubCategoryId === null || style.ProductSubSubCategoryId === undefined ||
               colorway.ColorwayUserField4 === null || colorway.ColorwayUserField4 === undefined ||
               colorway.ThemeId === null || colorway.ThemeId === undefined) {
@@ -173,10 +173,10 @@ class PlmDClusterService {
     const ekmTotal = counts.EKM.tOpt + counts.EKM.gOpt;
     const topTotal = aguTotal + eylTotal + ekmTotal;
 
-    const aguFark = planAGU - aguTotal;
-    const eylFark = planEYL - eylTotal;
-    const ekmFark = planEKM - ekmTotal;
-    const topFark = planTOP - topTotal;
+    const aguFark = aguTotal - planAGU;
+    const eylFark = eylTotal - planEYL;
+    const ekmFark = ekmTotal - planEKM;
+    const topFark = topTotal - planTOP;
 
     const aguOran = planAGU > 0 ? Math.round((aguTotal / planAGU) * 100) : 0;
     const eylOran = planEYL > 0 ? Math.round((eylTotal / planEYL) * 100) : 0;
@@ -255,10 +255,10 @@ class PlmDClusterService {
     const ekmTotal = totals.ekmTOpt + totals.ekmGOpt;
     const topTotal = aguTotal + eylTotal + ekmTotal;
 
-    const aguFark = totals.aguPlan - aguTotal;
-    const eylFark = totals.eylPlan - eylTotal;
-    const ekmFark = totals.ekmPlan - ekmTotal;
-    const topFark = totals.topPlan - topTotal;
+    const aguFark = aguTotal - totals.aguPlan;
+    const eylFark = eylTotal - totals.eylPlan;
+    const ekmFark = ekmTotal - totals.ekmPlan;
+    const topFark = topTotal - totals.topPlan;
 
     const aguOran = totals.aguPlan > 0 ? Math.round((aguTotal / totals.aguPlan) * 100) : 0;
     const eylOran = totals.eylPlan > 0 ? Math.round((eylTotal / totals.eylPlan) * 100) : 0;
