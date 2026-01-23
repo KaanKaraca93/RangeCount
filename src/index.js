@@ -8,6 +8,7 @@ const rangeDetailRoutes = require('./routes/rangeDetail.routes');
 const plmStyleRoutes = require('./routes/plmStyle.routes');
 const plmRangeRoutes = require('./routes/plmRange.routes');
 const plmThemeRoutes = require('./routes/plmTheme.routes');
+const dClusterRoutes = require('./routes/dCluster.routes');
 const bannerRoutes = require('./routes/banner.routes');
 
 const app = express();
@@ -30,6 +31,7 @@ app.use('/api', rangeDetailRoutes);
 app.use('/api', plmStyleRoutes);
 app.use('/api', plmRangeRoutes);
 app.use('/api', plmThemeRoutes);
+app.use('/api', dClusterRoutes);
 app.use('/api', bannerRoutes);
 
 // Health check endpoint
@@ -60,6 +62,7 @@ app.get('/', (req, res) => {
       plmRangesSummary: 'GET /api/plm-ranges/summary',
       plmThemes: 'GET /api/plm-themes',
       plmThemesSummary: 'GET /api/plm-themes/summary',
+      plmDCluster: 'GET /api/plm-d-cluster',
       banner: 'GET /api/banner'
     }
   });
@@ -97,6 +100,8 @@ app.listen(PORT, () => {
   console.log(`\n🎨 PLM Theme Data:`);
   console.log(`   GET  /api/plm-themes                                - Get real themes from PLM`);
   console.log(`   GET  /api/plm-themes/summary                        - Get PLM theme summary`);
+  console.log(`\n📦 PLM D-Cluster Data:`);
+  console.log(`   GET  /api/plm-d-cluster                             - Get D-Cluster (FreeFieldOne=D) data`);
   console.log(`\n📊 Banner Metrics:`);
   console.log(`   GET  /api/banner                                    - Get summary metrics for banner`);
 });
