@@ -171,6 +171,11 @@ class RangeCountSourceService {
               continue;
             }
             
+            // ⭐ ÖNEMLI: Daha önce başka placeholder'a eşleşmiş mi kontrol et
+            if (matchedColorwayIds.has(colorway.StyleColorwayId)) {
+              continue; // Bu colorway zaten kullanılmış, skip!
+            }
+            
             // Eşleşme kontrolü
             if (this.matchPlaceholder(placeholder, style, colorway)) {
               matchedColorways.push({
@@ -179,7 +184,7 @@ class RangeCountSourceService {
                 colorwayName: colorway.Name,
                 styleColorwayId: colorway.StyleColorwayId
               });
-              matchedColorwayIds.add(colorway.StyleColorwayId);
+              matchedColorwayIds.add(colorway.StyleColorwayId); // İlk eşleşmede ekle
             }
           }
         }
