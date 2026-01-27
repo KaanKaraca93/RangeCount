@@ -114,23 +114,30 @@ class PLMRangeV5Service {
       // 3. Dropdown verilerini çek
       const dropdownMap = await this.fetchDropdownData();
 
-      // 4. Her plan satırına placeholder ID ver
+      // 4. Her plan satırını Option Say kadar çoğaltarak placeholder ID ver
       const placeholders = [];
-      planData.forEach((plan, index) => {
-        placeholders.push({
-          placeholderId: `PH${index + 1}`,
-          marka: plan.Marka,
-          brandId: plan.BrandId,
-          urunGrubu: plan['Ürün Gurbu'],
-          subSubCategoryId: plan.SubSubCategoryId,
-          rangeTag: plan.RangeTag,
-          range: plan.Range,
-          extFldId: plan.ExtFldId,
-          rangeDetayi: plan['Range Detayı'],
-          dropDownValue: plan.DropDownValue,
-          cud5Id: plan.CUD5Id,
-          key: `${plan.BrandId}_${plan.SubSubCategoryId}_${plan.ExtFldId}_${plan.DropDownValue}_${plan.CUD5Id}`
-        });
+      let placeholderCounter = 1;
+      
+      planData.forEach((plan) => {
+        const optionCount = plan['Option Say'] || 1; // Option Say kadar placeholder oluştur
+        
+        for (let i = 0; i < optionCount; i++) {
+          placeholders.push({
+            placeholderId: `PH${placeholderCounter}`,
+            marka: plan.Marka,
+            brandId: plan.BrandId,
+            urunGrubu: plan['Ürün Gurbu'],
+            subSubCategoryId: plan.SubSubCategoryId,
+            rangeTag: plan.RangeTag,
+            range: plan.Range,
+            extFldId: plan.ExtFldId,
+            rangeDetayi: plan['Range Detayı'],
+            dropDownValue: plan.DropDownValue,
+            cud5Id: plan.CUD5Id,
+            key: `${plan.BrandId}_${plan.SubSubCategoryId}_${plan.ExtFldId}_${plan.DropDownValue}_${plan.CUD5Id}`
+          });
+          placeholderCounter++;
+        }
       });
 
       // 5. Colorway'leri topla ve eşleştir
@@ -196,34 +203,53 @@ class PLMRangeV5Service {
 
       // 6. Unpivot sonuçları oluştur
       const results = [];
+      const usedColorways = {}; // Her key için hangi colorway'ler kullanıldı
 
-      // Plandaki her placeholder için
+      // Aynı key'e sahip placeholder'ları grupla
+      const placeholderGroups = {};
+      placeholders.forEach(ph => {
+        if (!placeholderGroups[ph.key]) {
+          placeholderGroups[ph.key] = [];
+        }
+        placeholderGroups[ph.key].push(ph);
+      });
+
+      // Her placeholder için
       placeholders.forEach(placeholder => {
         const matchedColorways = colorwayMatches[placeholder.key] || [];
 
-        if (matchedColorways.length > 0) {
-          // Eşleşen colorway'ler için satır oluştur
-          matchedColorways.forEach(colorway => {
-            results.push({
-              placeholderId: placeholder.placeholderId,
-              marka: placeholder.marka,
-              brandId: placeholder.brandId,
-              urunGrubu: placeholder.urunGrubu,
-              subSubCategoryId: placeholder.subSubCategoryId,
-              rangeTag: placeholder.rangeTag,
-              range: placeholder.range,
-              extFldId: placeholder.extFldId,
-              rangeDetayi: placeholder.rangeDetayi,
-              dropDownValue: placeholder.dropDownValue,
-              cud5Id: placeholder.cud5Id,
-              plan: 1,
-              gerceklesen: 1,
-              styleId: colorway.styleId,
-              styleCode: colorway.styleCode,
-              colorwayId: colorway.colorwayId,
-              colorwayCode: colorway.colorwayCode,
-              colorwayName: colorway.colorwayName
-            });
+        // Bu key için daha önce kullanılmamış bir colorway bul
+        if (!usedColorways[placeholder.key]) {
+          usedColorways[placeholder.key] = [];
+        }
+
+        const unusedColorway = matchedColorways.find(
+          cw => !usedColorways[placeholder.key].includes(cw.colorwayId)
+        );
+
+        if (unusedColorway) {
+          // Eşleşen colorway bulundu, kullan
+          usedColorways[placeholder.key].push(unusedColorway.colorwayId);
+          
+          results.push({
+            placeholderId: placeholder.placeholderId,
+            marka: placeholder.marka,
+            brandId: placeholder.brandId,
+            urunGrubu: placeholder.urunGrubu,
+            subSubCategoryId: placeholder.subSubCategoryId,
+            rangeTag: placeholder.rangeTag,
+            range: placeholder.range,
+            extFldId: placeholder.extFldId,
+            rangeDetayi: placeholder.rangeDetayi,
+            dropDownValue: placeholder.dropDownValue,
+            cud5Id: placeholder.cud5Id,
+            plan: 1,
+            gerceklesen: 1,
+            styleId: unusedColorway.styleId,
+            styleCode: unusedColorway.styleCode,
+            colorwayId: unusedColorway.colorwayId,
+            colorwayCode: unusedColorway.colorwayCode,
+            colorwayName: unusedColorway.colorwayName
           });
         } else {
           // Eşleşmeyen placeholder için boş satır
