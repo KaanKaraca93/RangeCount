@@ -13,7 +13,7 @@ class PLMRangeV5Service {
    */
   readPlanData() {
     try {
-      const workbook = XLSX.readFile('RangeSayacv5.xlsx');
+      const workbook = XLSX.readFile('Rangesayacv5.xlsx');
       const worksheet = workbook.Sheets['Sayfa1'];
       const data = XLSX.utils.sheet_to_json(worksheet);
 
