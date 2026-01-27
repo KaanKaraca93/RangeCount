@@ -99,11 +99,11 @@ class PLMRangeV5Service {
   }
 
   /**
-   * Range verilerini hesapla
+   * Range verilerini hesapla (Unpivot - Ham veri)
    */
   async calculateRangeData() {
     try {
-      console.log('🔄 Range verileri hesaplanıyor...');
+      console.log('🔄 Range verileri hesaplanıyor (Unpivot format)...');
 
       // 1. Excel'den planı oku
       const planData = this.readPlanData();
@@ -114,11 +114,11 @@ class PLMRangeV5Service {
       // 3. Dropdown verilerini çek
       const dropdownMap = await this.fetchDropdownData();
 
-      // 4. Planı map'e çevir (hızlı erişim için)
-      const planMap = {};
-      planData.forEach(plan => {
-        const key = `${plan.BrandId}_${plan.SubSubCategoryId}_${plan.ExtFldId}_${plan.DropDownValue}_${plan.CUD5Id}`;
-        planMap[key] = {
+      // 4. Her plan satırına placeholder ID ver
+      const placeholders = [];
+      planData.forEach((plan, index) => {
+        placeholders.push({
+          placeholderId: `PH${index + 1}`,
           marka: plan.Marka,
           brandId: plan.BrandId,
           urunGrubu: plan['Ürün Gurbu'],
@@ -129,16 +129,18 @@ class PLMRangeV5Service {
           rangeDetayi: plan['Range Detayı'],
           dropDownValue: plan.DropDownValue,
           cud5Id: plan.CUD5Id,
-          pOpt: plan['Option Say'] || 0
-        };
+          key: `${plan.BrandId}_${plan.SubSubCategoryId}_${plan.ExtFldId}_${plan.DropDownValue}_${plan.CUD5Id}`
+        });
       });
 
-      // 5. Gerçekleşenleri say
-      const actualizedMap = {};
+      // 5. Colorway'leri topla ve eşleştir
+      const colorwayMatches = {}; // key -> array of colorways
 
       styles.forEach(style => {
         const brandId = style.Brand?.Id;
         const subSubCategoryId = style.ProductSubSubCategory?.Id;
+        const styleId = style.StyleId;
+        const styleCode = style.StyleCode;
 
         // Her colorway için
         if (style.StyleColorways && style.StyleColorways.length > 0) {
@@ -148,6 +150,9 @@ class PLMRangeV5Service {
               return; // Skip
             }
 
+            const colorwayId = colorway.StyleColorwayId;
+            const colorwayCode = colorway.Code;
+            const colorwayName = colorway.Name;
             const cud5Id = colorway.ColorwayUserDefinedField5?.Id || null;
 
             // Her range field için
@@ -167,13 +172,21 @@ class PLMRangeV5Service {
                   // Eşleştirme key'i oluştur
                   const key = `${brandId}_${subSubCategoryId}_${extField.ExtFldId}_${dropDownValue}_${cud5Id}`;
 
-                  // Bu colorway'i bu range'e daha önce saydık mı kontrol et
-                  if (!actualizedMap[key]) {
-                    actualizedMap[key] = new Set();
+                  if (!colorwayMatches[key]) {
+                    colorwayMatches[key] = [];
                   }
 
-                  // Aynı colorway'i aynı range'e iki kez sayma
-                  actualizedMap[key].add(colorway.StyleColorwayId);
+                  // Aynı colorway'i iki kez ekleme
+                  const alreadyExists = colorwayMatches[key].some(c => c.colorwayId === colorwayId);
+                  if (!alreadyExists) {
+                    colorwayMatches[key].push({
+                      styleId,
+                      styleCode,
+                      colorwayId,
+                      colorwayCode,
+                      colorwayName
+                    });
+                  }
                 });
               });
             }
@@ -181,37 +194,69 @@ class PLMRangeV5Service {
         }
       });
 
-      // 6. Sonuçları birleştir
+      // 6. Unpivot sonuçları oluştur
       const results = [];
 
-      // Plandaki kayıtları ekle
-      Object.keys(planMap).forEach(key => {
-        const plan = planMap[key];
-        const gOpt = actualizedMap[key] ? actualizedMap[key].size : 0;
-        const fark = gOpt - plan.pOpt;
-        const oran = plan.pOpt > 0 ? Math.round((gOpt / plan.pOpt) * 100) : (gOpt > 0 ? 100 : 0);
+      // Plandaki her placeholder için
+      placeholders.forEach(placeholder => {
+        const matchedColorways = colorwayMatches[placeholder.key] || [];
 
-        results.push({
-          marka: plan.marka,
-          brandId: plan.brandId,
-          urunGrubu: plan.urunGrubu,
-          subSubCategoryId: plan.subSubCategoryId,
-          rangeTag: plan.rangeTag,
-          range: plan.range,
-          extFldId: plan.extFldId,
-          rangeDetayi: plan.rangeDetayi,
-          dropDownValue: plan.dropDownValue,
-          cud5Id: plan.cud5Id,
-          pOpt: plan.pOpt,
-          gOpt: gOpt,
-          fark: fark,
-          oran: `${oran}%`
-        });
+        if (matchedColorways.length > 0) {
+          // Eşleşen colorway'ler için satır oluştur
+          matchedColorways.forEach(colorway => {
+            results.push({
+              placeholderId: placeholder.placeholderId,
+              marka: placeholder.marka,
+              brandId: placeholder.brandId,
+              urunGrubu: placeholder.urunGrubu,
+              subSubCategoryId: placeholder.subSubCategoryId,
+              rangeTag: placeholder.rangeTag,
+              range: placeholder.range,
+              extFldId: placeholder.extFldId,
+              rangeDetayi: placeholder.rangeDetayi,
+              dropDownValue: placeholder.dropDownValue,
+              cud5Id: placeholder.cud5Id,
+              plan: 1,
+              gerceklesen: 1,
+              styleId: colorway.styleId,
+              styleCode: colorway.styleCode,
+              colorwayId: colorway.colorwayId,
+              colorwayCode: colorway.colorwayCode,
+              colorwayName: colorway.colorwayName
+            });
+          });
+        } else {
+          // Eşleşmeyen placeholder için boş satır
+          results.push({
+            placeholderId: placeholder.placeholderId,
+            marka: placeholder.marka,
+            brandId: placeholder.brandId,
+            urunGrubu: placeholder.urunGrubu,
+            subSubCategoryId: placeholder.subSubCategoryId,
+            rangeTag: placeholder.rangeTag,
+            range: placeholder.range,
+            extFldId: placeholder.extFldId,
+            rangeDetayi: placeholder.rangeDetayi,
+            dropDownValue: placeholder.dropDownValue,
+            cud5Id: placeholder.cud5Id,
+            plan: 1,
+            gerceklesen: 0,
+            styleId: null,
+            styleCode: null,
+            colorwayId: null,
+            colorwayCode: null,
+            colorwayName: null
+          });
+        }
       });
 
       // 7. Plan'da olmayan gerçekleşenleri ekle
-      Object.keys(actualizedMap).forEach(key => {
-        if (!planMap[key]) {
+      let unplannedCounter = placeholders.length + 1;
+      Object.keys(colorwayMatches).forEach(key => {
+        const placeholder = placeholders.find(p => p.key === key);
+        
+        if (!placeholder) {
+          // Bu key için plan yok, gerçekleşen var
           const parts = key.split('_');
           const brandId = parseInt(parts[0]);
           const subSubCategoryId = parseInt(parts[1]);
@@ -219,50 +264,58 @@ class PLMRangeV5Service {
           const dropDownValue = parseInt(parts[3]);
           const cud5Id = parseInt(parts[4]);
 
-          const gOpt = actualizedMap[key].size;
-          
           // Dropdown'dan bilgileri al
           const dropdownInfo = dropdownMap[dropDownValue];
           const rangeDetayi = dropdownInfo ? dropdownInfo.name : `ID_${dropDownValue}`;
 
-          // Marka ve ürün grubu bilgisini bul (diğer kayıtlardan)
-          const samplePlan = results.find(r => r.brandId === brandId && r.subSubCategoryId === subSubCategoryId);
+          // Marka ve ürün grubu bilgisini bul
+          const samplePlan = placeholders.find(p => p.brandId === brandId && p.subSubCategoryId === subSubCategoryId);
           const marka = samplePlan ? samplePlan.marka : (brandId === 4 ? 'Ipekyol' : 'Twist');
           const urunGrubu = samplePlan ? samplePlan.urunGrubu : 'Unknown';
 
-          // Range bilgisini bul (ExtFldId'den)
+          // Range bilgisini bul
           let range = 'Unknown';
           let rangeTag = 'Unknown';
           if (dropdownInfo) {
-            const sampleRangeInfo = results.find(r => r.extFldId === extFldId);
+            const sampleRangeInfo = placeholders.find(p => p.extFldId === extFldId);
             if (sampleRangeInfo) {
               range = sampleRangeInfo.range;
               rangeTag = sampleRangeInfo.rangeTag;
             }
           }
 
-          results.push({
-            marka: marka,
-            brandId: brandId,
-            urunGrubu: urunGrubu,
-            subSubCategoryId: subSubCategoryId,
-            rangeTag: rangeTag,
-            range: range,
-            extFldId: extFldId,
-            rangeDetayi: rangeDetayi,
-            dropDownValue: dropDownValue,
-            cud5Id: cud5Id,
-            pOpt: 0,
-            gOpt: gOpt,
-            fark: gOpt,
-            oran: '100%'
+          // Her colorway için satır ekle
+          colorwayMatches[key].forEach(colorway => {
+            results.push({
+              placeholderId: `PH${unplannedCounter}`,
+              marka: marka,
+              brandId: brandId,
+              urunGrubu: urunGrubu,
+              subSubCategoryId: subSubCategoryId,
+              rangeTag: rangeTag,
+              range: range,
+              extFldId: extFldId,
+              rangeDetayi: rangeDetayi,
+              dropDownValue: dropDownValue,
+              cud5Id: cud5Id,
+              plan: 0,
+              gerceklesen: 1,
+              styleId: colorway.styleId,
+              styleCode: colorway.styleCode,
+              colorwayId: colorway.colorwayId,
+              colorwayCode: colorway.colorwayCode,
+              colorwayName: colorway.colorwayName
+            });
+            unplannedCounter++;
           });
         }
       });
 
-      console.log(`✅ Toplam ${results.length} range kaydı oluşturuldu`);
-      console.log(`   - Planda olan: ${Object.keys(planMap).length}`);
-      console.log(`   - Plan'da olmayan gerçekleşen: ${results.length - Object.keys(planMap).length}`);
+      console.log(`✅ Toplam ${results.length} unpivot satır oluşturuldu`);
+      console.log(`   - Placeholder sayısı: ${placeholders.length}`);
+      console.log(`   - Plan=1, Gerçekleşen=1: ${results.filter(r => r.plan === 1 && r.gerceklesen === 1).length}`);
+      console.log(`   - Plan=1, Gerçekleşen=0: ${results.filter(r => r.plan === 1 && r.gerceklesen === 0).length}`);
+      console.log(`   - Plan=0, Gerçekleşen=1: ${results.filter(r => r.plan === 0 && r.gerceklesen === 1).length}`);
 
       return results;
     } catch (error) {

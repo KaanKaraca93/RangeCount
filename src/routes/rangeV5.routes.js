@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
 
 /**
  * @route   GET /api/range-v5/summary
- * @desc    Range verilerinin özet istatistikleri
+ * @desc    Range verilerinin özet istatistikleri (unpivot veriden hesaplanan)
  * @access  Public
  */
 router.get('/summary', async (req, res) => {
@@ -39,72 +39,92 @@ router.get('/summary', async (req, res) => {
     
     const rangeData = await plmRangeV5Service.calculateRangeData();
 
+    // Placeholder bazlı toplam hesapla
+    const placeholderStats = {};
+    rangeData.forEach(item => {
+      const phId = item.placeholderId;
+      if (!placeholderStats[phId]) {
+        placeholderStats[phId] = {
+          marka: item.marka,
+          range: item.range,
+          cud5Id: item.cud5Id,
+          plan: item.plan,
+          gerceklesen: 0
+        };
+      }
+      if (item.gerceklesen === 1) {
+        placeholderStats[phId].gerceklesen++;
+      }
+    });
+
     // Özet istatistikler
-    const totalPOpt = rangeData.reduce((sum, item) => sum + item.pOpt, 0);
-    const totalGOpt = rangeData.reduce((sum, item) => sum + item.gOpt, 0);
-    const totalFark = totalGOpt - totalPOpt;
-    const oran = totalPOpt > 0 ? Math.round((totalGOpt / totalPOpt) * 100) : 0;
+    const totalPlaceholders = Object.keys(placeholderStats).length;
+    const totalPlan = Object.values(placeholderStats).filter(p => p.plan === 1).length;
+    const totalGerceklesen = Object.values(placeholderStats).filter(p => p.gerceklesen > 0).length;
+    const totalUnplanned = Object.values(placeholderStats).filter(p => p.plan === 0).length;
 
     // Marka bazlı özet
     const byMarka = {};
-    rangeData.forEach(item => {
+    Object.values(placeholderStats).forEach(item => {
       if (!byMarka[item.marka]) {
-        byMarka[item.marka] = { pOpt: 0, gOpt: 0 };
+        byMarka[item.marka] = { plan: 0, gerceklesen: 0 };
       }
-      byMarka[item.marka].pOpt += item.pOpt;
-      byMarka[item.marka].gOpt += item.gOpt;
+      if (item.plan === 1) byMarka[item.marka].plan++;
+      if (item.gerceklesen > 0) byMarka[item.marka].gerceklesen++;
     });
 
     // Range bazlı özet
     const byRange = {};
-    rangeData.forEach(item => {
+    Object.values(placeholderStats).forEach(item => {
       if (!byRange[item.range]) {
-        byRange[item.range] = { pOpt: 0, gOpt: 0 };
+        byRange[item.range] = { plan: 0, gerceklesen: 0 };
       }
-      byRange[item.range].pOpt += item.pOpt;
-      byRange[item.range].gOpt += item.gOpt;
+      if (item.plan === 1) byRange[item.range].plan++;
+      if (item.gerceklesen > 0) byRange[item.range].gerceklesen++;
     });
 
     // CUD5 bazlı özet
     const byCUD5 = {};
-    rangeData.forEach(item => {
+    Object.values(placeholderStats).forEach(item => {
       const cud5Key = item.cud5Id || 'null';
       if (!byCUD5[cud5Key]) {
-        byCUD5[cud5Key] = { pOpt: 0, gOpt: 0 };
+        byCUD5[cud5Key] = { plan: 0, gerceklesen: 0 };
       }
-      byCUD5[cud5Key].pOpt += item.pOpt;
-      byCUD5[cud5Key].gOpt += item.gOpt;
+      if (item.plan === 1) byCUD5[cud5Key].plan++;
+      if (item.gerceklesen > 0) byCUD5[cud5Key].gerceklesen++;
     });
 
     res.json({
       success: true,
       summary: {
         total: {
-          pOpt: totalPOpt,
-          gOpt: totalGOpt,
-          fark: totalFark,
-          oran: `${oran}%`
+          totalPlaceholders: totalPlaceholders,
+          plan: totalPlan,
+          gerceklesen: totalGerceklesen,
+          unplanned: totalUnplanned,
+          fark: totalGerceklesen - totalPlan,
+          oran: totalPlan > 0 ? `${Math.round((totalGerceklesen / totalPlan) * 100)}%` : '0%'
         },
         byMarka: Object.keys(byMarka).map(marka => ({
           marka,
-          pOpt: byMarka[marka].pOpt,
-          gOpt: byMarka[marka].gOpt,
-          fark: byMarka[marka].gOpt - byMarka[marka].pOpt,
-          oran: `${byMarka[marka].pOpt > 0 ? Math.round((byMarka[marka].gOpt / byMarka[marka].pOpt) * 100) : 0}%`
+          plan: byMarka[marka].plan,
+          gerceklesen: byMarka[marka].gerceklesen,
+          fark: byMarka[marka].gerceklesen - byMarka[marka].plan,
+          oran: byMarka[marka].plan > 0 ? `${Math.round((byMarka[marka].gerceklesen / byMarka[marka].plan) * 100)}%` : '0%'
         })),
         byRange: Object.keys(byRange).map(range => ({
           range,
-          pOpt: byRange[range].pOpt,
-          gOpt: byRange[range].gOpt,
-          fark: byRange[range].gOpt - byRange[range].pOpt,
-          oran: `${byRange[range].pOpt > 0 ? Math.round((byRange[range].gOpt / byRange[range].pOpt) * 100) : 0}%`
+          plan: byRange[range].plan,
+          gerceklesen: byRange[range].gerceklesen,
+          fark: byRange[range].gerceklesen - byRange[range].plan,
+          oran: byRange[range].plan > 0 ? `${Math.round((byRange[range].gerceklesen / byRange[range].plan) * 100)}%` : '0%'
         })),
         byCUD5: Object.keys(byCUD5).map(cud5 => ({
           cud5Id: cud5 === 'null' ? null : parseInt(cud5),
-          pOpt: byCUD5[cud5].pOpt,
-          gOpt: byCUD5[cud5].gOpt,
-          fark: byCUD5[cud5].gOpt - byCUD5[cud5].pOpt,
-          oran: `${byCUD5[cud5].pOpt > 0 ? Math.round((byCUD5[cud5].gOpt / byCUD5[cud5].pOpt) * 100) : 0}%`
+          plan: byCUD5[cud5].plan,
+          gerceklesen: byCUD5[cud5].gerceklesen,
+          fark: byCUD5[cud5].gerceklesen - byCUD5[cud5].plan,
+          oran: byCUD5[cud5].plan > 0 ? `${Math.round((byCUD5[cud5].gerceklesen / byCUD5[cud5].plan) * 100)}%` : '0%'
         }))
       }
     });
