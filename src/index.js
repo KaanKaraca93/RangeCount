@@ -10,6 +10,7 @@ const plmRangeRoutes = require('./routes/plmRange.routes');
 const plmThemeRoutes = require('./routes/plmTheme.routes');
 const dClusterRoutes = require('./routes/dCluster.routes');
 const rangeCountSourceRoutes = require('./routes/rangeCountSource.routes');
+const rangeV5Routes = require('./routes/rangeV5.routes');
 const bannerRoutes = require('./routes/banner.routes');
 
 const app = express();
@@ -34,6 +35,7 @@ app.use('/api', plmRangeRoutes);
 app.use('/api', plmThemeRoutes);
 app.use('/api', dClusterRoutes);
 app.use('/api', rangeCountSourceRoutes);
+app.use('/api/range-v5', rangeV5Routes);
 app.use('/api', bannerRoutes);
 
 // Health check endpoint
@@ -67,6 +69,8 @@ app.get('/', (req, res) => {
       plmDCluster: 'GET /api/plm-d-cluster',
       rangeCountSource: 'GET /api/range-count-source',
       rangeCountSourceSummary: 'GET /api/range-count-source/summary',
+      rangeV5: 'GET /api/range-v5',
+      rangeV5Summary: 'GET /api/range-v5/summary',
       banner: 'GET /api/banner'
     }
   });
@@ -109,6 +113,9 @@ app.listen(PORT, () => {
   console.log(`\n📋 Range Count Source (Placeholder Level):`);
   console.log(`   GET  /api/range-count-source                        - Get placeholder-level plan vs actual`);
   console.log(`   GET  /api/range-count-source/summary                - Get summary statistics`);
+  console.log(`\n🎯 Range V5 (Range Feature Tracking):`);
+  console.log(`   GET  /api/range-v5                                  - Get range feature tracking`);
+  console.log(`   GET  /api/range-v5/summary                          - Get range V5 summary statistics`);
   console.log(`\n📊 Banner Metrics:`);
   console.log(`   GET  /api/banner                                    - Get summary metrics for banner`);
 });
