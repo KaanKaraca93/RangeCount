@@ -9,15 +9,18 @@ let
     dataList = source[data],
     dataTable = Table.FromList(dataList, Splitter.SplitByNothing(), null, null, ExtraValues.Error),
     
-    // Record'ları genişlet
+    // Record'ları genişlet (Unpivot format)
     expandedData = Table.ExpandRecordColumn(dataTable, "Column1", 
-        {"marka", "brandId", "urunGrubu", "subSubCategoryId", "rangeTag", "range", 
-         "extFldId", "rangeDetayi", "dropDownValue", "cud5Id", "pOpt", "gOpt", "fark", "oran"}, 
-        {"Marka", "BrandId", "UrunGrubu", "SubSubCategoryId", "RangeTag", "Range", 
-         "ExtFldId", "RangeDetayi", "DropDownValue", "CUD5Id", "P_Opt", "G_Opt", "Fark", "Oran"}),
+        {"placeholderId", "marka", "brandId", "urunGrubu", "subSubCategoryId", "rangeTag", 
+         "range", "extFldId", "rangeDetayi", "dropDownValue", "cud5Id", "plan", "gerceklesen",
+         "styleId", "styleCode", "colorwayId", "colorwayCode", "colorwayName"}, 
+        {"PlaceholderId", "Marka", "BrandId", "UrunGrubu", "SubSubCategoryId", "RangeTag", 
+         "Range", "ExtFldId", "RangeDetayi", "DropDownValue", "CUD5Id", "Plan", "Gerceklesen",
+         "StyleId", "StyleCode", "ColorwayId", "ColorwayCode", "ColorwayName"}),
     
     // Veri tiplerini ayarla
     typedData = Table.TransformColumnTypes(expandedData, {
+        {"PlaceholderId", type text},
         {"Marka", type text},
         {"BrandId", Int64.Type},
         {"UrunGrubu", type text},
@@ -28,31 +31,34 @@ let
         {"RangeDetayi", type text},
         {"DropDownValue", Int64.Type},
         {"CUD5Id", Int64.Type},
-        {"P_Opt", Int64.Type},
-        {"G_Opt", Int64.Type},
-        {"Fark", Int64.Type},
-        {"Oran", type text}
+        {"Plan", Int64.Type},
+        {"Gerceklesen", Int64.Type},
+        {"StyleId", Int64.Type},
+        {"StyleCode", type text},
+        {"ColorwayId", Int64.Type},
+        {"ColorwayCode", type text},
+        {"ColorwayName", type text}
     }),
     
-    // Oran sütununu yüzde formatına çevir (% işaretini kaldır ve sayıya çevir)
-    addOranNumeric = Table.AddColumn(typedData, "OranNumeric", each 
-        Number.From(Text.BeforeDelimiter([Oran], "%")) / 100, Percentage.Type),
-    
-    // Tamamlanma durumu sütunu ekle
-    addStatus = Table.AddColumn(addOranNumeric, "Durum", each 
-        if [P_Opt] = 0 then "Plan Yok, Gerçekleşen Var"
-        else if [G_Opt] = 0 then "Henüz Başlanmadı"
-        else if [OranNumeric] >= 1 then "Tamamlandı"
-        else if [OranNumeric] >= 0.5 then "Yarı Yolda"
-        else "Başlangıç Aşaması", type text),
+    // Eşleşme durumu sütunu ekle
+    addMatchStatus = Table.AddColumn(typedData, "EslesmeDurumu", each 
+        if [Plan] = 1 and [Gerceklesen] = 1 then "Eşleşen"
+        else if [Plan] = 1 and [Gerceklesen] = 0 then "Eşleşmeyen"
+        else if [Plan] = 0 and [Gerceklesen] = 1 then "Plan Dışı Gerçekleşen"
+        else "Diğer", type text),
     
     // FT durumu sütunu ekle
-    addFTStatus = Table.AddColumn(addStatus, "FT_Durumu", each 
+    addFTStatus = Table.AddColumn(addMatchStatus, "FT_Durumu", each 
         if [CUD5Id] = 1 then "Standart"
         else if [CUD5Id] = 2 then "FT"
-        else "Diğer", type text)
+        else "Diğer", type text),
+    
+    // Placeholder tipi (gerçek plan mı, otomatik oluşturulmuş mu)
+    addPlaceholderType = Table.AddColumn(addFTStatus, "PlaceholderTipi", each 
+        if [Plan] = 1 then "Planlanan"
+        else "Otomatik Oluşturulmuş", type text)
 in
-    addFTStatus
+    addPlaceholderType
 
 
 /* 
@@ -65,15 +71,36 @@ KULLANIM TALİMATI:
 4. Yukarıdaki kodu yapıştırın
 5. "Bitti" (Done) ve "Kapat ve Yükle" (Close & Load)
 
-NOTLAR:
-- API canlı ortamdan (Heroku) veri çeker
-- Yenileme butonu ile güncel verileri alabilirsiniz
-- Pivot tablo oluşturarak detaylı analiz yapabilirsiniz
+VERİ FORMATI (UNPIVOT - HAM VERİ):
+===================================
+Bu API unpivot (ham) veri döner. Her satır bir placeholder-colorway eşleşmesini gösterir.
 
-ÖNERİLEN PİVOT TABLO YAPISI:
-============================
-Satırlar: Marka, UrunGrubu, Range, RangeDetayi
-Sütunlar: FT_Durumu, Durum
-Değerler: Sum(P_Opt), Sum(G_Opt), Sum(Fark), Average(OranNumeric)
+ÖNEMLİ SÜTUNLAR:
+- PlaceholderId: PH1, PH2, PH3... (Her placeholder'ın unique kodu)
+- Plan: 1 (planlanan) veya 0 (plan dışı)
+- Gerceklesen: 1 (eşleşen) veya 0 (eşleşmeyen)
+- EslesmeDurumu: "Eşleşen", "Eşleşmeyen", "Plan Dışı Gerçekleşen"
+- StyleId, ColorwayId: Eşleşen ürün bilgileri (null ise eşleşme yok)
+
+SENARYO ÖRNEKLERİ:
+==================
+1. Plan=1, Gerceklesen=1, StyleId dolu → Planlanan ve gerçekleşen (eşleşen)
+2. Plan=1, Gerceklesen=0, StyleId null → Planlanan ama gerçekleşmeyen
+3. Plan=0, Gerceklesen=1, StyleId dolu → Plan dışı gerçekleşen
+
+ÖNERİLEN ANALİZ:
+===============
+1. Pivot Tablo:
+   Satırlar: Marka, UrunGrubu, Range, RangeDetayi
+   Sütunlar: EslesmeDurumu
+   Değerler: Count(PlaceholderId), CountDistinct(StyleId)
+
+2. Eşleşme Analizi:
+   - Hangi placeholder'lara hangi style/colorway'ler eşleşmiş?
+   - Filtre: EslesmeDurumu = "Eşleşen", StyleCode, ColorwayName görüntüle
+
+3. Eksik Plan Analizi:
+   - Filtre: EslesmeDurumu = "Eşleşmeyen"
+   - Hangi range'lerde gerçekleşme eksik?
 
 */
