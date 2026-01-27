@@ -250,8 +250,18 @@ class PLMRangeV5Service {
         }
       });
 
-      // 7. Plan'da olmayan gerçekleşenleri ekle
-      let unplannedCounter = placeholders.length + 1;
+      // 7. Plan'da olmayan gerçekleşenleri kontrol et (sadece planda tanımlı RangeTag'ler için)
+      // Önce her BrandId+SubSubCategoryId için planda hangi ExtFldId'ler (RangeTag'ler) var tespit et
+      const plannedExtFldIds = {};
+      placeholders.forEach(p => {
+        const key = `${p.brandId}_${p.subSubCategoryId}`;
+        if (!plannedExtFldIds[key]) {
+          plannedExtFldIds[key] = new Set();
+        }
+        plannedExtFldIds[key].add(p.extFldId);
+      });
+
+      // Plan dışı gerçekleşenleri kontrol et
       Object.keys(colorwayMatches).forEach(key => {
         const placeholder = placeholders.find(p => p.key === key);
         
@@ -263,6 +273,16 @@ class PLMRangeV5Service {
           const extFldId = parts[2];
           const dropDownValue = parseInt(parts[3]);
           const cud5Id = parseInt(parts[4]);
+
+          // Bu ürün grubu için bu ExtFldId planda tanımlı mı kontrol et
+          const productKey = `${brandId}_${subSubCategoryId}`;
+          const isExtFldIdPlanned = plannedExtFldIds[productKey] && plannedExtFldIds[productKey].has(extFldId);
+
+          // Eğer bu ExtFldId planda tanımlı değilse, bu gerçekleşeni atla
+          if (!isExtFldIdPlanned) {
+            console.log(`⚠️  Plan dışı gerçekleşen atlandı: ExtFldId ${extFldId.substring(0, 8)}... bu ürün grubu için planda tanımlı değil`);
+            return; // Skip
+          }
 
           // Dropdown'dan bilgileri al
           const dropdownInfo = dropdownMap[dropDownValue];
@@ -284,38 +304,16 @@ class PLMRangeV5Service {
             }
           }
 
-          // Her colorway için satır ekle
-          colorwayMatches[key].forEach(colorway => {
-            results.push({
-              placeholderId: `PH${unplannedCounter}`,
-              marka: marka,
-              brandId: brandId,
-              urunGrubu: urunGrubu,
-              subSubCategoryId: subSubCategoryId,
-              rangeTag: rangeTag,
-              range: range,
-              extFldId: extFldId,
-              rangeDetayi: rangeDetayi,
-              dropDownValue: dropDownValue,
-              cud5Id: cud5Id,
-              plan: 0,
-              gerceklesen: 1,
-              styleId: colorway.styleId,
-              styleCode: colorway.styleCode,
-              colorwayId: colorway.colorwayId,
-              colorwayCode: colorway.colorwayCode,
-              colorwayName: colorway.colorwayName
-            });
-            unplannedCounter++;
-          });
+          // NOT: Plan=0 olan kayıtlara placeholder ID vermiyoruz, direkt atıyoruz
+          console.log(`⚠️  Plan dışı gerçekleşen bulundu ama placeholder ID verilmedi: ${marka} - ${urunGrubu} - ${rangeDetayi} (${colorwayMatches[key].length} adet)`);
+          // Bu kayıtları eklemeyelim - plan=0 olan kayıtları atıyoruz
         }
       });
 
       console.log(`✅ Toplam ${results.length} unpivot satır oluşturuldu`);
       console.log(`   - Placeholder sayısı: ${placeholders.length}`);
-      console.log(`   - Plan=1, Gerçekleşen=1: ${results.filter(r => r.plan === 1 && r.gerceklesen === 1).length}`);
-      console.log(`   - Plan=1, Gerçekleşen=0: ${results.filter(r => r.plan === 1 && r.gerceklesen === 0).length}`);
-      console.log(`   - Plan=0, Gerçekleşen=1: ${results.filter(r => r.plan === 0 && r.gerceklesen === 1).length}`);
+      console.log(`   - Plan=1, Gerçekleşen=1: ${results.filter(r => r.plan === 1 && r.gerceklesen === 1).length} (Eşleşen)`);
+      console.log(`   - Plan=1, Gerçekleşen=0: ${results.filter(r => r.plan === 1 && r.gerceklesen === 0).length} (Eşleşmeyen)`);
 
       return results;
     } catch (error) {

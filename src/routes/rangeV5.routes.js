@@ -57,11 +57,10 @@ router.get('/summary', async (req, res) => {
       }
     });
 
-    // Özet istatistikler
+    // Özet istatistikler (artık plan=0 yok, hepsi plan=1)
     const totalPlaceholders = Object.keys(placeholderStats).length;
-    const totalPlan = Object.values(placeholderStats).filter(p => p.plan === 1).length;
+    const totalPlan = totalPlaceholders; // Hepsi plan=1
     const totalGerceklesen = Object.values(placeholderStats).filter(p => p.gerceklesen > 0).length;
-    const totalUnplanned = Object.values(placeholderStats).filter(p => p.plan === 0).length;
 
     // Marka bazlı özet
     const byMarka = {};
@@ -101,7 +100,6 @@ router.get('/summary', async (req, res) => {
           totalPlaceholders: totalPlaceholders,
           plan: totalPlan,
           gerceklesen: totalGerceklesen,
-          unplanned: totalUnplanned,
           fark: totalGerceklesen - totalPlan,
           oran: totalPlan > 0 ? `${Math.round((totalGerceklesen / totalPlan) * 100)}%` : '0%'
         },
