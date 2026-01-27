@@ -62,7 +62,7 @@ class RangeCountSourceService {
       const params = {
         '$filter': 'SeasonId eq 10 and IsDeleted eq 0 and Status ne 103 and Status ne 1 and BrandId in (4,8) and DivisionId eq 6',
         '$select': 'StyleId,StyleCode',
-        '$expand': 'Brand,SubCategory,ProductSubSubCategory,UserDefinedField5,StyleColorways($select=StyleColorwayId,Code,Name,ColorwayUserField1,FreeFieldOne;$expand=ColorwayUserDefinedField4,ColorwayUserDefinedField5;$filter=ColorwayStatus ne 4)'
+        '$expand': 'Brand,SubCategory,ProductSubSubCategory,UserDefinedField5,StyleColorways($select=StyleColorwayId,Code,Name,ColorwayUserField1,FreeFieldOne,FreeFieldFive;$expand=ColorwayUserDefinedField4,ColorwayUserDefinedField5;$filter=ColorwayStatus ne 4)'
       };
       
       console.log(`📞 PLM'den style verileri çekiliyor...`);
@@ -142,6 +142,7 @@ class RangeCountSourceService {
         console.log(`   ColorwayUserDefinedField4 (CUD4):`, sampleColorway.ColorwayUserDefinedField4);
         console.log(`   ColorwayUserDefinedField5 (CUD5):`, sampleColorway.ColorwayUserDefinedField5);
         console.log(`   FreeFieldOne (Cluster):`, sampleColorway.FreeFieldOne);
+        console.log(`   FreeFieldFive:`, sampleColorway.FreeFieldFive);
       }
       
       // İlk placeholder örneğini log'la (debug)
@@ -182,6 +183,7 @@ class RangeCountSourceService {
                 styleCode: style.StyleCode,
                 colorwayCode: colorway.Code,
                 colorwayName: colorway.Name,
+                freeFieldFive: colorway.FreeFieldFive || null,
                 styleColorwayId: colorway.StyleColorwayId
               });
               matchedColorwayIds.add(colorway.StyleColorwayId); // İlk eşleşmede ekle
@@ -211,6 +213,7 @@ class RangeCountSourceService {
           gerceklesenUrunKodu: matchedColorways.map(c => c.styleCode).join(', '),
           gerceklesenRenkKodu: matchedColorways.map(c => c.colorwayCode).join(', '),
           gerceklesenRenkAdi: matchedColorways.map(c => c.colorwayName).join(', '),
+          gerceklesenFreeFieldFive: matchedColorways.map(c => c.freeFieldFive).join(', '),
           gerceklesenDetay: matchedColorways
         });
       }
@@ -267,10 +270,12 @@ class RangeCountSourceService {
               gerceklesenUrunKodu: style.StyleCode,
               gerceklesenRenkKodu: colorway.Code,
               gerceklesenRenkAdi: colorway.Name,
+              gerceklesenFreeFieldFive: colorway.FreeFieldFive || null,
               gerceklesenDetay: [{
                 styleCode: style.StyleCode,
                 colorwayCode: colorway.Code,
                 colorwayName: colorway.Name,
+                freeFieldFive: colorway.FreeFieldFive || null,
                 styleColorwayId: colorway.StyleColorwayId
               }]
             });
