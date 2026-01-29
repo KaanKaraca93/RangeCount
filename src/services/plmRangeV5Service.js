@@ -322,10 +322,14 @@ class PLMRangeV5Service {
           const marka = samplePlan ? samplePlan.marka : (brandId === 4 ? 'Ipekyol' : 'Twist');
           const urunGrubu = samplePlan ? samplePlan.urunGrubu : 'Unknown';
 
-          // Range bilgisini bul
+          // Range bilgisini bul (BrandId + SubSubCategoryId + ExtFldId kombinasyonuna göre)
           let range = 'Unknown';
           let rangeTag = 'Unknown';
-          const sampleRangeInfo = placeholders.find(p => p.extFldId === extFldId);
+          const sampleRangeInfo = placeholders.find(p => 
+            p.extFldId === extFldId && 
+            p.brandId === brandId && 
+            p.subSubCategoryId === subSubCategoryId
+          );
           if (sampleRangeInfo) {
             range = sampleRangeInfo.range;
             rangeTag = sampleRangeInfo.rangeTag;

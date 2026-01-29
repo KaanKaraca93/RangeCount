@@ -35,3 +35,6 @@ build/
 # Excel temp files
 ~$*.xlsx
 ~$*.xls
+
+# Swagger (PLM'e manuel import için - git'e commit etme)
+swagger.json

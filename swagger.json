@@ -37,6 +37,14 @@
       "description": "PLM'den gerçek tema bazlı veriler"
     },
     {
+      "name": "PLM D-Cluster",
+      "description": "D-Cluster (FreeFieldOne='D') ürünlerinin tema ve kategori bazında takibi"
+    },
+    {
+      "name": "Range Count Source",
+      "description": "Placeholder bazlı plan vs gerçekleşen karşılaştırması (ham data, pivotlanmamış)"
+    },
+    {
       "name": "Banner",
       "description": "Banner için özet metrikler"
     },
@@ -467,6 +475,310 @@
         "tags": ["PLM Theme Data"],
         "summary": "PLM tema özet istatistikleri",
         "description": "Genel tema tamamlanma istatistikleri",
+        "responses": {
+          "200": {
+            "description": "Başarılı"
+          }
+        }
+      }
+    },
+    "/api/plm-d-cluster": {
+      "get": {
+        "tags": ["PLM D-Cluster"],
+        "summary": "D-Cluster ürün takibi",
+        "description": "FreeFieldOne='D' olan ürünlerin SubCategory ve Tema (AGU/EYL/EKM) bazında takibi. ColorwayStatus=4 ve ThemeId=1172 olanlar exclude edilir.",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 14
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "subCategory": {
+                            "type": "string",
+                            "example": "BLUZ"
+                          },
+                          "subCategoryId": {
+                            "type": "integer",
+                            "example": 21
+                          },
+                          "agu": {
+                            "type": "object",
+                            "properties": {
+                              "plan": {
+                                "type": "integer",
+                                "description": "Planlanan option sayısı"
+                              },
+                              "tOpt": {
+                                "type": "integer",
+                                "description": "Taslak option sayısı (Status=1)"
+                              },
+                              "gOpt": {
+                                "type": "integer",
+                                "description": "Gerçekleşen option sayısı (Status!=1)"
+                              },
+                              "total": {
+                                "type": "integer",
+                                "description": "Toplam option (tOpt + gOpt)"
+                              },
+                              "fark": {
+                                "type": "integer",
+                                "description": "Fark (total - plan). Pozitif=Fazla, Negatif=Eksik"
+                              },
+                              "oran": {
+                                "type": "string",
+                                "example": "87%"
+                              }
+                            }
+                          },
+                          "eyl": {
+                            "type": "object",
+                            "description": "Eylül dönemi (ThemeId: 1121, 1122, 1126)"
+                          },
+                          "ekm": {
+                            "type": "object",
+                            "description": "Ekim dönemi (ThemeId: 1123, 1124, 1127)"
+                          },
+                          "top": {
+                            "type": "object",
+                            "properties": {
+                              "plan": {
+                                "type": "integer"
+                              },
+                              "total": {
+                                "type": "integer"
+                              },
+                              "fark": {
+                                "type": "integer"
+                              },
+                              "oran": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "meta": {
+                      "type": "object",
+                      "properties": {
+                        "description": {
+                          "type": "string",
+                          "example": "D-Cluster ürünleri (FreeFieldOne=D)"
+                        },
+                        "themeGroups": {
+                          "type": "object",
+                          "properties": {
+                            "AGU": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer"
+                              },
+                              "example": [1118, 1119, 1120, 1125]
+                            },
+                            "EYL": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer"
+                              },
+                              "example": [1121, 1122, 1126]
+                            },
+                            "EKM": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer"
+                              },
+                              "example": [1123, 1124, 1127]
+                            }
+                          }
+                        },
+                        "excludeRules": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "example": [
+                            "ColorwayStatus = 4 (iptal)",
+                            "ThemeId = 1172 (iptal)",
+                            "FreeFieldOne != D (sadece D cluster)"
+                          ]
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/range-count-source": {
+      "get": {
+        "tags": ["Range Count Source"],
+        "summary": "Placeholder bazlı plan vs gerçekleşen (ham data)",
+        "description": "Excel küp raporu için placeholder seviyesinde ham veri. Her satır = 1 placeholder veya planlanmamış colorway. Sadece Cluster='B' filtrelenir, diğer alanlar null olabilir.",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 859
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "marka": {
+                            "type": "string",
+                            "example": "IPEKYOL"
+                          },
+                          "brandId": {
+                            "type": "integer"
+                          },
+                          "opsiyonKodu": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Placeholder kodu (PH1, PH2, ...). null ise planlanmamış",
+                            "example": "PH1"
+                          },
+                          "urunGrubu": {
+                            "type": "string",
+                            "example": "BLUZ"
+                          },
+                          "subCategoryId": {
+                            "type": "integer"
+                          },
+                          "urunAltGrup": {
+                            "type": "string",
+                            "example": "BLUZ"
+                          },
+                          "subSubCategoryId": {
+                            "type": "integer"
+                          },
+                          "fashionPyramid": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "Fashion Newness"
+                          },
+                          "fashionPyramidId": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "lifeStyleGrup": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "Tema"
+                          },
+                          "lifeStyleGrupId": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "ft": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "FT"
+                          },
+                          "ftId": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "segment": {
+                            "type": "string",
+                            "nullable": true,
+                            "example": "Segment 3"
+                          },
+                          "segmentId": {
+                            "type": "integer",
+                            "nullable": true
+                          },
+                          "planOptionSay": {
+                            "type": "integer",
+                            "description": "Planlanan option sayısı (0 veya 1)"
+                          },
+                          "gerceklesenOptionSay": {
+                            "type": "integer",
+                            "description": "Gerçekleşen colorway sayısı"
+                          },
+                          "gerceklesenUrunKodu": {
+                            "type": "string",
+                            "description": "Gerçekleşen StyleCode'lar (virgülle ayrılmış)"
+                          },
+                          "gerceklesenRenkKodu": {
+                            "type": "string",
+                            "description": "Gerçekleşen Colorway Code'lar"
+                          },
+                          "gerceklesenRenkAdi": {
+                            "type": "string",
+                            "description": "Gerçekleşen Colorway Name'ler"
+                          }
+                        }
+                      }
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "toplamPlanlanan": {
+                          "type": "integer"
+                        },
+                        "toplamGerceklesen": {
+                          "type": "integer"
+                        },
+                        "fark": {
+                          "type": "integer"
+                        },
+                        "eslesen": {
+                          "type": "integer",
+                          "description": "Plan=1 ve Gerçekleşen>0"
+                        },
+                        "sadecePlanlanan": {
+                          "type": "integer",
+                          "description": "Plan=1, Gerçekleşen=0"
+                        },
+                        "sadaceGerceklesen": {
+                          "type": "integer",
+                          "description": "Plan=0, Gerçekleşen>0"
+                        },
+                        "toplamKayit": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/range-count-source/summary": {
+      "get": {
+        "tags": ["Range Count Source"],
+        "summary": "Sadece özet istatistikler",
+        "description": "Ham data olmadan sadece özet metrikler",
         "responses": {
           "200": {
             "description": "Başarılı"
