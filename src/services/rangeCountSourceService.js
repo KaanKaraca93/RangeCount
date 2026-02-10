@@ -61,8 +61,8 @@ class RangeCountSourceService {
       const url = `${PLM_CONFIG.ionApiUrl}/${PLM_CONFIG.tenantId}/FASHIONPLM/odata2/api/odata2/Style`;
       const params = {
         '$filter': 'SeasonId eq 10 and IsDeleted eq 0 and Status ne 103 and Status ne 1 and BrandId in (4,8) and DivisionId eq 6',
-        '$select': 'StyleId,StyleCode',
-        '$expand': 'Brand,SubCategory,ProductSubSubCategory,UserDefinedField5,StyleColorways($select=StyleColorwayId,Code,Name,ColorwayUserField1,FreeFieldOne,FreeFieldFive;$expand=ColorwayUserDefinedField4,ColorwayUserDefinedField5;$filter=ColorwayStatus ne 4)'
+        '$select': 'StyleId,StyleCode,NumericValue1,Quantity',
+        '$expand': 'MarketField3,Brand,SubCategory,ProductSubSubCategory,UserDefinedField5,StyleColorways($select=StyleColorwayId,Code,Name,ColorwayUserField1,FreeFieldOne,FreeFieldFive;$expand=ColorwayUserDefinedField4,ColorwayUserDefinedField5;$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckboxValue;$filter=ExtFldId eq a21b2b14-8ca3-49f2-8e80-b12823bf14a2 or ExtFldId eq 79cb5b20-3028-44d4-a85e-ed18c00af3c8;$orderby=ExtFldId;$expand=StyleExtendedFields($select=Name))'
       };
       
       console.log(`📞 PLM'den style verileri çekiliyor...`);
@@ -98,6 +98,18 @@ class RangeCountSourceService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Style'dan extended field değerlerini çıkar
+   */
+  getExtendedFieldValue(style, extFldId) {
+    if (!style.StyleExtendedFieldValues || !Array.isArray(style.StyleExtendedFieldValues)) {
+      return null;
+    }
+    
+    const field = style.StyleExtendedFieldValues.find(f => f.ExtFldId === extFldId);
+    return field ? field.NumberValue : null;
   }
 
   /**
@@ -187,7 +199,13 @@ class RangeCountSourceService {
                 colorwayCode: colorway.Code,
                 colorwayName: colorway.Name,
                 freeFieldFive: colorway.FreeFieldFive || null,
-                styleColorwayId: colorway.StyleColorwayId
+                styleColorwayId: colorway.StyleColorwayId,
+                // Yeni alanlar
+                psf: style.MarketField3 ? style.MarketField3.Name : null,
+                onAdet: style.NumericValue1 || null,
+                planlananAdet: style.Quantity || null,
+                hedefMarkUp: this.getExtendedFieldValue(style, 'a21b2b14-8ca3-49f2-8e80-b12823bf14a2'),
+                alimHedefFiyati: this.getExtendedFieldValue(style, '79cb5b20-3028-44d4-a85e-ed18c00af3c8')
               });
               matchedColorwayIds.add(colorway.StyleColorwayId); // İlk eşleşmede ekle
               foundMatch = true; // ⭐ Eşleşme bulundu, iç döngüyü kır
@@ -219,6 +237,12 @@ class RangeCountSourceService {
           gerceklesenRenkKodu: matchedColorways.map(c => c.colorwayCode).join(', '),
           gerceklesenRenkAdi: matchedColorways.map(c => c.colorwayName).join(', '),
           gerceklesenFreeFieldFive: matchedColorways.map(c => c.freeFieldFive).join(', '),
+          // Yeni alanlar (sadece ilk eşleşen için - zaten max 1 olacak)
+          gerceklesenPsf: matchedColorways.length > 0 ? matchedColorways[0].psf : null,
+          gerceklesenOnAdet: matchedColorways.length > 0 ? matchedColorways[0].onAdet : null,
+          gerceklesenPlanlananAdet: matchedColorways.length > 0 ? matchedColorways[0].planlananAdet : null,
+          gerceklesenHedefMarkUp: matchedColorways.length > 0 ? matchedColorways[0].hedefMarkUp : null,
+          gerceklesenAlimHedefFiyati: matchedColorways.length > 0 ? matchedColorways[0].alimHedefFiyati : null,
           gerceklesenDetay: matchedColorways
         });
       }
@@ -276,12 +300,24 @@ class RangeCountSourceService {
               gerceklesenRenkKodu: colorway.Code,
               gerceklesenRenkAdi: colorway.Name,
               gerceklesenFreeFieldFive: colorway.FreeFieldFive || null,
+              // Yeni alanlar
+              gerceklesenPsf: style.MarketField3 ? style.MarketField3.Name : null,
+              gerceklesenOnAdet: style.NumericValue1 || null,
+              gerceklesenPlanlananAdet: style.Quantity || null,
+              gerceklesenHedefMarkUp: this.getExtendedFieldValue(style, 'a21b2b14-8ca3-49f2-8e80-b12823bf14a2'),
+              gerceklesenAlimHedefFiyati: this.getExtendedFieldValue(style, '79cb5b20-3028-44d4-a85e-ed18c00af3c8'),
               gerceklesenDetay: [{
                 styleCode: style.StyleCode,
                 colorwayCode: colorway.Code,
                 colorwayName: colorway.Name,
                 freeFieldFive: colorway.FreeFieldFive || null,
-                styleColorwayId: colorway.StyleColorwayId
+                styleColorwayId: colorway.StyleColorwayId,
+                // Yeni alanlar
+                psf: style.MarketField3 ? style.MarketField3.Name : null,
+                onAdet: style.NumericValue1 || null,
+                planlananAdet: style.Quantity || null,
+                hedefMarkUp: this.getExtendedFieldValue(style, 'a21b2b14-8ca3-49f2-8e80-b12823bf14a2'),
+                alimHedefFiyati: this.getExtendedFieldValue(style, '79cb5b20-3028-44d4-a85e-ed18c00af3c8')
               }]
             });
           }
