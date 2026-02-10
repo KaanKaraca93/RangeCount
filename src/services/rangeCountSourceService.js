@@ -160,8 +160,11 @@ class RangeCountSourceService {
       
       for (const placeholder of this.placeholders) {
         const matchedColorways = [];
+        let foundMatch = false; // ⭐ Birebir eşleşme için flag
         
         for (const style of plmStyles) {
+          if (foundMatch) break; // ⭐ Eşleşme bulundu, dış döngüyü kır
+          
           if (!style.StyleColorways || !Array.isArray(style.StyleColorways)) {
             continue;
           }
@@ -187,6 +190,8 @@ class RangeCountSourceService {
                 styleColorwayId: colorway.StyleColorwayId
               });
               matchedColorwayIds.add(colorway.StyleColorwayId); // İlk eşleşmede ekle
+              foundMatch = true; // ⭐ Eşleşme bulundu, iç döngüyü kır
+              break; // ⭐ İlk eşleşmeden sonra colorway döngüsünü kır
             }
           }
         }
