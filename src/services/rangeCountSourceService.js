@@ -101,7 +101,7 @@ class RangeCountSourceService {
   }
 
   /**
-   * Style'dan extended field değerlerini çıkar
+   * Style'dan extended field değerini çıkar (sadece NumberValue)
    */
   getExtendedFieldValue(style, extFldId) {
     if (!style.StyleExtendedFieldValues || !Array.isArray(style.StyleExtendedFieldValues)) {
@@ -109,7 +109,18 @@ class RangeCountSourceService {
     }
     
     const field = style.StyleExtendedFieldValues.find(f => f.ExtFldId === extFldId);
-    return field ? field.NumberValue : null;
+    if (!field || !field.NumberValue) {
+      return null;
+    }
+    
+    // Debug: İlk 3 değeri logla
+    if (Math.random() < 0.01) { // %1 şansla log
+      console.log(`📊 ExtFldId: ${extFldId}, Raw NumberValue: "${field.NumberValue}" (type: ${typeof field.NumberValue})`);
+    }
+    
+    // NumberValue string olarak geliyorsa, parseFloat ile çevir
+    const value = typeof field.NumberValue === 'string' ? parseFloat(field.NumberValue) : field.NumberValue;
+    return value;
   }
 
   /**
