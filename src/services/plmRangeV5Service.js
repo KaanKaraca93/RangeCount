@@ -288,31 +288,33 @@ class PLMRangeV5Service {
       });
 
       // Plan dışı gerçekleşenleri kontrol et
+      // İki senaryo:
+      // 1. Hiç placeholder olmayan KEY'ler (tamamen plan dışı DropDownValue)
+      // 2. Placeholder var ama hepsi kullanıldı, fazla colorwaylar var
       let unplannedCount = 0;
       Object.keys(colorwayMatches).forEach(key => {
-        const placeholder = placeholders.find(p => p.key === key);
-        
-        if (!placeholder) {
-          // Bu key için plan yok, gerçekleşen var
-          const parts = key.split('_');
-          const brandId = parseInt(parts[0]);
-          const subSubCategoryId = parseInt(parts[1]);
-          const extFldId = parts[2];
-          const dropDownValue = parseInt(parts[3]);
-          const cud5Id = parseInt(parts[4]);
+        const parts = key.split('_');
+        const brandId = parseInt(parts[0]);
+        const subSubCategoryId = parseInt(parts[1]);
+        const extFldId = parts[2];
+        const dropDownValue = parseInt(parts[3]);
+        const cud5Id = parseInt(parts[4]);
 
-          // Bu ürün grubu için bu ExtFldId planda tanımlı mı kontrol et
-          const productKey = `${brandId}_${subSubCategoryId}`;
-          const isExtFldIdPlanned = plannedExtFldIds[productKey] && plannedExtFldIds[productKey].has(extFldId);
+        // Bu ürün grubu için bu ExtFldId planda tanımlı mı kontrol et
+        const productKey = `${brandId}_${subSubCategoryId}`;
+        const isExtFldIdPlanned = plannedExtFldIds[productKey] && plannedExtFldIds[productKey].has(extFldId);
 
-          // Eğer bu ExtFldId planda tanımlı değilse, bu gerçekleşeni atla
-          if (!isExtFldIdPlanned) {
-            return; // Skip - RangeTag planda tanımlı değil
-          }
+        // Eğer bu ExtFldId planda tanımlı değilse, bu gerçekleşeni atla
+        if (!isExtFldIdPlanned) {
+          return; // Skip - RangeTag planda tanımlı değil
+        }
 
-          // RangeTag planda tanımlı ama bu spesifik DropDownValue yok
-          // Plan=0, Gerçekleşen=1 olarak ekle (PlaceholderId = null)
+        // Bu KEY için kaç colorway kullanıldı?
+        const usedCount = usedColorways[key] ? usedColorways[key].length : 0;
+        const totalColorways = colorwayMatches[key].length;
 
+        // Eğer kullanılmayan colorwaylar varsa, bunlar Plan=0, Gerçekleşen=1
+        if (totalColorways > usedCount) {
           // Dropdown'dan bilgileri al
           const dropdownInfo = dropdownMap[dropDownValue];
           const rangeDetayi = dropdownInfo ? dropdownInfo.name : `ID_${dropDownValue}`;
@@ -335,16 +337,18 @@ class PLMRangeV5Service {
             rangeTag = sampleRangeInfo.rangeTag;
           }
 
-          // Her colorway için satır ekle (PlaceholderId = null)
-          // Ama sadece bu ExtFldId için daha önce kullanılmamışsa ekle
+          // Kullanılmayan colorwayları ekle
           colorwayMatches[key].forEach(colorway => {
+            // Bu colorway kullanılmış mı?
+            const isUsed = usedColorways[key] && usedColorways[key].includes(colorway.colorwayId);
+            
             // Bu colorway bu ExtFldId için daha önce results'a eklendi mi kontrol et
             const alreadyUsedInThisRange = results.some(r => 
               r.colorwayId === colorway.colorwayId && 
               r.extFldId === extFldId
             );
             
-            if (!alreadyUsedInThisRange) {
+            if (!isUsed && !alreadyUsedInThisRange) {
               results.push({
                 placeholderId: null, // Plan=0 için ID yok
                 marka: marka,
