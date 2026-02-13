@@ -336,28 +336,37 @@ class PLMRangeV5Service {
           }
 
           // Her colorway için satır ekle (PlaceholderId = null)
+          // Ama sadece bu ExtFldId için daha önce kullanılmamışsa ekle
           colorwayMatches[key].forEach(colorway => {
-            results.push({
-              placeholderId: null, // Plan=0 için ID yok
-              marka: marka,
-              brandId: brandId,
-              urunGrubu: urunGrubu,
-              subSubCategoryId: subSubCategoryId,
-              rangeTag: rangeTag,
-              range: range,
-              extFldId: extFldId,
-              rangeDetayi: rangeDetayi,
-              dropDownValue: dropDownValue,
-              cud5Id: cud5Id,
-              plan: 0,
-              gerceklesen: 1,
-              styleId: colorway.styleId,
-              styleCode: colorway.styleCode,
-              colorwayId: colorway.colorwayId,
-              colorwayCode: colorway.colorwayCode,
-              colorwayName: colorway.colorwayName
-            });
-            unplannedCount++;
+            // Bu colorway bu ExtFldId için daha önce results'a eklendi mi kontrol et
+            const alreadyUsedInThisRange = results.some(r => 
+              r.colorwayId === colorway.colorwayId && 
+              r.extFldId === extFldId
+            );
+            
+            if (!alreadyUsedInThisRange) {
+              results.push({
+                placeholderId: null, // Plan=0 için ID yok
+                marka: marka,
+                brandId: brandId,
+                urunGrubu: urunGrubu,
+                subSubCategoryId: subSubCategoryId,
+                rangeTag: rangeTag,
+                range: range,
+                extFldId: extFldId,
+                rangeDetayi: rangeDetayi,
+                dropDownValue: dropDownValue,
+                cud5Id: cud5Id,
+                plan: 0,
+                gerceklesen: 1,
+                styleId: colorway.styleId,
+                styleCode: colorway.styleCode,
+                colorwayId: colorway.colorwayId,
+                colorwayCode: colorway.colorwayCode,
+                colorwayName: colorway.colorwayName
+              });
+              unplannedCount++;
+            }
           });
         }
       });
