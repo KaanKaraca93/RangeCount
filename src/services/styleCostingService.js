@@ -19,7 +19,7 @@ class StyleCostingService {
       const params = {
         '$select': 'StyleId,StyleCode,NumericValue1,Quantity,DeliveryIdList,Remark',
         '$filter': 'SeasonId eq 10 and BrandId in (4,8) and DivisionId eq 6 and Status ne 103 and Status ne 1',
-        '$expand': 'Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),Productsubsubcategory($select=Name),Brand($select=Name),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,ColorwayStatus;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
+        '$expand': 'Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),Productsubsubcategory($select=Name),Brand($select=Name),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,ColorwayStatus,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
       };
       
       console.log(`📞 PLM'den style costing verileri çekiliyor...`);
@@ -211,9 +211,11 @@ class StyleCostingService {
               colorwayId: colorway.StyleColorwayId,
               colorwayCode: colorway.Code,
               colorwayName: colorway.Name,
-              colorwayStatus: colorway.ColorwayStatus, // Yeni alan
-              minimumQuantity: colorway.MinimumQuantity, // Yeni alan
+              colorwayStatus: colorway.ColorwayStatus,
+              minimumQuantity: colorway.MinimumQuantity,
               colorwayUserField1: colorway.ColorwayUserField1, // Fashion Pyramid
+              colorwayUserField4: colorway.ColorwayUserField4, // Yeni alan
+              colorwayUserField5: colorway.ColorwayUserField5, // Yeni alan
               freeFieldOne: colorway.FreeFieldOne, // Cluster
               freeFieldFive: colorway.FreeFieldFive,
               cud4: colorway.ColorwayUserDefinedField4 ? colorway.ColorwayUserDefinedField4.Name : null,
@@ -299,7 +301,7 @@ class StyleCostingService {
           'season', 'styleStatus',
           'marka', 'brandId', 'urunGrubu', 'subCategoryId', 'urunAltGrubu', 'subSubCategoryId',
           'marketField5', 'udf5', 'udf5Id', 'colorwayId', 'colorwayCode', 'colorwayName', 'colorwayStatus', 'minimumQuantity',
-          'colorwayUserField1', 'freeFieldOne', 'freeFieldFive', 'cud4', 'cud4Id', 'cud5', 'cud5Id',
+          'colorwayUserField1', 'colorwayUserField4', 'colorwayUserField5', 'freeFieldOne', 'freeFieldFive', 'cud4', 'cud4Id', 'cud5', 'cud5Id',
           'themeCode', 'themeName', 'themeDescription', 'hasCostingData', 'styleCostingSupplierId'];
         
         const dynamicFields = allKeys.filter(k => !staticFields.includes(k));
