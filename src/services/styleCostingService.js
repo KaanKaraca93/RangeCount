@@ -223,10 +223,10 @@ class StyleCostingService {
               cud5: colorway.ColorwayUserDefinedField5 ? colorway.ColorwayUserDefinedField5.Name : null,
               cud5Id: colorway.ColorwayUserDefinedField5 ? colorway.ColorwayUserDefinedField5.Id : null,
               
-              // Theme bilgileri
-              themeCode: colorway.theme ? colorway.theme.Code : null,
-              themeName: colorway.theme ? colorway.theme.Name : null,
-              themeDescription: colorway.theme ? colorway.theme.Description : null,
+              // Theme bilgileri (colorway seviyesinde - case-insensitive)
+              themeCode: (colorway.theme || colorway.Theme) ? (colorway.theme || colorway.Theme).Code : null,
+              themeName: (colorway.theme || colorway.Theme) ? (colorway.theme || colorway.Theme).Name : null,
+              themeDescription: (colorway.theme || colorway.Theme) ? (colorway.theme || colorway.Theme).Description : null,
               
               // Costing bilgileri
               hasCostingData: styleCostingSupplierId ? true : false,
