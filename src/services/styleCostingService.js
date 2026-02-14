@@ -19,7 +19,7 @@ class StyleCostingService {
       const params = {
         '$select': 'StyleId,StyleCode,NumericValue1,Quantity,DeliveryIdList,Remark',
         '$filter': 'SeasonId eq 10 and BrandId in (4,8) and DivisionId eq 6 and Status ne 103 and Status ne 1',
-        '$expand': 'Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),Productsubsubcategory($select=Name),Brand($select=Name),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,ColorwayStatus,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
+        '$expand': 'Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,ColorwayStatus,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
       };
       
       console.log(`📞 PLM'den style costing verileri çekiliyor...`);
@@ -201,8 +201,8 @@ class StyleCostingService {
               brandId: style.Brand ? style.Brand.Id : null,
               urunGrubu: style.SubCategory ? style.SubCategory.Name : null,
               subCategoryId: style.SubCategory ? style.SubCategory.Id : null,
-              urunAltGrubu: style.Productsubsubcategory ? style.Productsubsubcategory.Name : null,
-              subSubCategoryId: style.Productsubsubcategory ? style.Productsubsubcategory.Id : null,
+              urunAltGrubu: (style.ProductSubSubCategory || style.Productsubsubcategory) ? (style.ProductSubSubCategory || style.Productsubsubcategory).Name : null,
+              subSubCategoryId: (style.ProductSubSubCategory || style.Productsubsubcategory) ? (style.ProductSubSubCategory || style.Productsubsubcategory).Id : null,
               marketField5: style.MarketField5 ? style.MarketField5.Name : null,
               udf5: style.UserDefinedField5 ? style.UserDefinedField5.Name : null,
               udf5Id: style.UserDefinedField5 ? style.UserDefinedField5.Id : null,
