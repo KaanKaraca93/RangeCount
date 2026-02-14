@@ -11,6 +11,7 @@ const plmThemeRoutes = require('./routes/plmTheme.routes');
 const dClusterRoutes = require('./routes/dCluster.routes');
 const rangeCountSourceRoutes = require('./routes/rangeCountSource.routes');
 const rangeV5Routes = require('./routes/rangeV5.routes');
+const styleCostingRoutes = require('./routes/styleCosting.routes');
 const bannerRoutes = require('./routes/banner.routes');
 
 const app = express();
@@ -36,6 +37,7 @@ app.use('/api', plmThemeRoutes);
 app.use('/api', dClusterRoutes);
 app.use('/api', rangeCountSourceRoutes);
 app.use('/api/range-v5', rangeV5Routes);
+app.use('/api/style-costing', styleCostingRoutes);
 app.use('/api', bannerRoutes);
 
 // Health check endpoint
@@ -71,6 +73,8 @@ app.get('/', (req, res) => {
       rangeCountSourceSummary: 'GET /api/range-count-source/summary',
       rangeV5: 'GET /api/range-v5',
       rangeV5Summary: 'GET /api/range-v5/summary',
+      styleCosting: 'GET /api/style-costing',
+      styleCostingSummary: 'GET /api/style-costing/summary',
       banner: 'GET /api/banner'
     }
   });
@@ -116,6 +120,9 @@ app.listen(PORT, () => {
   console.log(`\n🎯 Range V5 (Range Feature Tracking):`);
   console.log(`   GET  /api/range-v5                                  - Get range feature tracking`);
   console.log(`   GET  /api/range-v5/summary                          - Get range V5 summary statistics`);
+  console.log(`\n💰 Style Costing (Budget Tracking):`);
+  console.log(`   GET  /api/style-costing                             - Get style costing data (SupplierId=2)`);
+  console.log(`   GET  /api/style-costing/summary                     - Get style costing summary`);
   console.log(`\n📊 Banner Metrics:`);
   console.log(`   GET  /api/banner                                    - Get summary metrics for banner`);
 });
