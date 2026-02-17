@@ -83,7 +83,7 @@ app.get('/widget.html', (req, res) => {
         </div>
     </div>
     <script>
-        const API_URL = '${req.protocol}://${req.get('host')}/api/banner';
+        const API_URL = 'https://${req.get('host')}/api/banner';
         async function loadData() {
             try {
                 const response = await fetch(API_URL);
