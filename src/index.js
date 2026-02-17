@@ -103,27 +103,27 @@ app.get('/widget.html', (req, res) => {
             document.getElementById('widget-content').innerHTML = html;
         }
         function renderCategory(title, cat) {
+            const oran = parseFloat(cat.tamamlanmaOrani) || 0;
             return \`<div class="category-section">
                 <div class="category-header">
                     <h4 class="category-title">\${title}</h4>
-                    <span class="category-total">\${cat.toplam || 0}</span>
+                    <span class="category-total" style="color: \${oran >= 100 ? '#28a745' : '#1D7FF0'}">\${cat.tamamlanmaOrani}</span>
                 </div>
                 <div class="items-container">
-                    \${(cat.items || []).map(item => \`
-                        <div class="item-card">
-                            <div class="item-name">\${item.name}</div>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: \${item.tamamlanmaYuzdesi}%"></div>
-                            </div>
-                            <div class="item-stats">
-                                <span>Tamamlanan: <span class="stat-value">\${item.tamamlanan}</span></span>
-                                <span>Hedef: <span class="stat-value">\${item.hedef}</span></span>
-                            </div>
-                            <div class="item-stats">
-                                <span>Oran: <span class="stat-value">\${item.tamamlanmaYuzdesi.toFixed(1)}%</span></span>
-                            </div>
+                    <div class="item-card">
+                        <div class="item-name">P Option Toplam</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: \${Math.min(oran, 100)}%; background: \${oran >= 100 ? 'linear-gradient(90deg, #28a745 0%, #34ce57 100%)' : 'linear-gradient(90deg, #1D7FF0 0%, #4A90E2 100%)'}"></div>
                         </div>
-                    \`).join('')}
+                        <div class="item-stats">
+                            <span>P Option: <span class="stat-value">\${cat.toplamPOpt}</span></span>
+                            <span>G Option: <span class="stat-value">\${cat.toplamGOpt}</span></span>
+                        </div>
+                        <div class="item-stats">
+                            <span>Fark: <span class="stat-value" style="color: \${cat.fark >= 0 ? '#28a745' : '#dc3545'}">\${cat.fark}</span></span>
+                            <span>Oran: <span class="stat-value">\${cat.tamamlanmaOrani}</span></span>
+                        </div>
+                    </div>
                 </div>
             </div>\`;
         }
