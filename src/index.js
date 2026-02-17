@@ -40,6 +40,100 @@ app.use('/api/range-v5', rangeV5Routes);
 app.use('/api/style-costing', styleCostingRoutes);
 app.use('/api', bannerRoutes);
 
+// Widget HTML endpoint
+app.get('/widget.html', (req, res) => {
+  res.send(`<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Range Banner Widget</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Source Sans Pro', Arial, sans-serif; background: #ffffff; padding: 16px; }
+        .range-banner-widget { max-width: 100%; }
+        .widget-header { border-bottom: 2px solid #5c666f; padding-bottom: 12px; margin-bottom: 20px; }
+        .widget-title { color: #2c3e50; font-size: 20px; font-weight: 600; margin: 0; }
+        .widget-content { display: grid; gap: 24px; }
+        .category-section { background: #f8f9fa; border-radius: 6px; padding: 16px; border-left: 4px solid #5c666f; }
+        .category-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .category-title { font-size: 16px; font-weight: 600; color: #2c3e50; margin: 0; }
+        .category-total { font-size: 24px; font-weight: 700; color: #1D7FF0; }
+        .items-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+        .item-card { background: white; border-radius: 4px; padding: 12px; border: 1px solid #e1e4e8; transition: all 0.2s ease; }
+        .item-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        .item-name { font-size: 14px; font-weight: 600; color: #2c3e50; margin-bottom: 8px; }
+        .progress-bar { height: 8px; background: #e1e4e8; border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #1D7FF0 0%, #4A90E2 100%); transition: width 0.3s ease; border-radius: 4px; }
+        .item-stats { display: flex; justify-content: space-between; font-size: 12px; color: #5c666f; margin-top: 4px; }
+        .stat-value { font-weight: 600; color: #2c3e50; }
+        .loading { text-align: center; padding: 40px; color: #5c666f; font-size: 16px; }
+        .error { background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; padding: 16px; color: #856404; text-align: center; }
+        .last-update { text-align: right; font-size: 11px; color: #8899a6; margin-top: 16px; font-style: italic; }
+        @media (max-width: 768px) { .items-container { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="range-banner-widget">
+        <div class="widget-header">
+            <h3 class="widget-title">📊 Range Tamamlanma Durumu</h3>
+        </div>
+        <div id="widget-content" class="widget-content">
+            <div class="loading">⏳ Veriler yükleniyor...</div>
+        </div>
+    </div>
+    <script>
+        const API_URL = '${req.protocol}://${req.get('host')}/api/banner';
+        async function loadData() {
+            try {
+                const response = await fetch(API_URL);
+                if (!response.ok) throw new Error(\`HTTP \${response.status}\`);
+                const result = await response.json();
+                if (!result.success) throw new Error('Invalid response');
+                renderData(result.data);
+            } catch (error) {
+                document.getElementById('widget-content').innerHTML = \`<div class="error">❌ \${error.message}</div>\`;
+            }
+        }
+        function renderData(data) {
+            let html = '';
+            if (data.urunKategorisi) html += renderCategory('Ürün Kategorisi', data.urunKategorisi);
+            if (data.tema) html += renderCategory('Tema', data.tema);
+            html += \`<div class="last-update">Son güncelleme: \${new Date().toLocaleString('tr-TR')}</div>\`;
+            document.getElementById('widget-content').innerHTML = html;
+        }
+        function renderCategory(title, cat) {
+            return \`<div class="category-section">
+                <div class="category-header">
+                    <h4 class="category-title">\${title}</h4>
+                    <span class="category-total">\${cat.toplam || 0}</span>
+                </div>
+                <div class="items-container">
+                    \${(cat.items || []).map(item => \`
+                        <div class="item-card">
+                            <div class="item-name">\${item.name}</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: \${item.tamamlanmaYuzdesi}%"></div>
+                            </div>
+                            <div class="item-stats">
+                                <span>Tamamlanan: <span class="stat-value">\${item.tamamlanan}</span></span>
+                                <span>Hedef: <span class="stat-value">\${item.hedef}</span></span>
+                            </div>
+                            <div class="item-stats">
+                                <span>Oran: <span class="stat-value">\${item.tamamlanmaYuzdesi.toFixed(1)}%</span></span>
+                            </div>
+                        </div>
+                    \`).join('')}
+                </div>
+            </div>\`;
+        }
+        loadData();
+        setInterval(loadData, 5*60*1000);
+    </script>
+</body>
+</html>`);
+});
+
 // Health check endpoint
 app.get('/', (req, res) => {
   res.json({
