@@ -2,7 +2,7 @@
   "openapi": "3.0.0",
   "info": {
     "title": "Ipekyol Range Sayaç API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "PLM Range Planning & Tracking API - Koleksiyon planlama ve range takip sistemi",
     "contact": {
       "name": "Ipekyol PLM Team",
@@ -13,12 +13,20 @@
     {
       "url": "https://rangecount-652fcc1f20d9.herokuapp.com",
       "description": "Production Server"
+    },
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development"
     }
   ],
   "tags": [
     {
+      "name": "Token",
+      "description": "PLM OAuth2.0 token yönetimi"
+    },
+    {
       "name": "Range Data",
-      "description": "Koleksiyon range verileri ve istatistikler"
+      "description": "Koleksiyon range verileri ve istatistikler (Excel bazlı)"
     },
     {
       "name": "Range Details",
@@ -45,20 +53,208 @@
       "description": "Placeholder bazlı plan vs gerçekleşen karşılaştırması (ham data, pivotlanmamış)"
     },
     {
-      "name": "Banner",
-      "description": "Banner için özet metrikler"
+      "name": "Range V5",
+      "description": "RangeSayacv5.xlsx bazlı range özellik takibi - placeholder seviyesinde unpivot veri"
     },
     {
-      "name": "Token",
-      "description": "PLM OAuth2.0 token yönetimi"
+      "name": "Style Costing",
+      "description": "PLM'den colorway bazlı maliyet bilgileri (SupplierId=2 Hedef Maliyet)"
+    },
+    {
+      "name": "Banner",
+      "description": "Banner için özet metrikler"
     }
   ],
   "paths": {
+    "/api/token": {
+      "get": {
+        "tags": ["Token"],
+        "summary": "PLM Access Token Al",
+        "description": "Infor PLM/ION API için geçerli bir OAuth2.0 access token döndürür. Token cache'lenir ve otomatik yenilenir.",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Token alınamadı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/token/info": {
+      "get": {
+        "tags": ["Token"],
+        "summary": "Token Bilgisi",
+        "description": "Token durumu ve geçerlilik bilgilerini döndürür (token değerini göstermeden)",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "tokenInfo": {
+                      "type": "object",
+                      "properties": {
+                        "hasToken": {
+                          "type": "boolean"
+                        },
+                        "isValid": {
+                          "type": "boolean"
+                        },
+                        "expiryTime": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "tokenType": {
+                          "type": "string",
+                          "example": "Bearer"
+                        }
+                      }
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/token/refresh": {
+      "post": {
+        "tags": ["Token"],
+        "summary": "Token Yenile",
+        "description": "Mevcut token'ı iptal edip yeni token alır (force refresh)",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token refreshed successfully"
+                    },
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "tokenType": {
+                      "type": "string",
+                      "example": "Bearer"
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Token yenilenemedi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/token/revoke": {
+      "post": {
+        "tags": ["Token"],
+        "summary": "Token İptal Et",
+        "description": "Mevcut token'ı cache'den siler",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Token revoked successfully"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Token iptal edilemedi",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/ranges": {
       "get": {
         "tags": ["Range Data"],
         "summary": "Tüm range verilerini getir",
-        "description": "53 satır range verisi döndürür",
+        "description": "Excel'den yüklenen tüm range (option) verilerini döndürür",
         "responses": {
           "200": {
             "description": "Başarılı",
@@ -85,6 +281,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -104,6 +310,16 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -112,6 +328,7 @@
       "get": {
         "tags": ["Range Data"],
         "summary": "Life Style Grup'a göre filtrele",
+        "description": "Belirli bir life style grubuna ait range verilerini döndürür",
         "parameters": [
           {
             "name": "group",
@@ -126,7 +343,42 @@
         ],
         "responses": {
           "200": {
-            "description": "Başarılı"
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "group": {
+                      "type": "string",
+                      "example": "Mono"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -135,6 +387,7 @@
       "get": {
         "tags": ["Range Data"],
         "summary": "Ürün Alt Grup'a göre filtrele",
+        "description": "Belirli bir ürün alt grubuna ait range verilerini döndürür (ELBISE, BLUZ, PANTOLON, vb.)",
         "parameters": [
           {
             "name": "group",
@@ -148,7 +401,85 @@
         ],
         "responses": {
           "200": {
-            "description": "Başarılı"
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "productGroup": {
+                      "type": "string",
+                      "example": "ELBISE"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/ranges/reload": {
+      "post": {
+        "tags": ["Range Data"],
+        "summary": "Excel verisini yeniden yükle",
+        "description": "Excel dosyasını yeniden okuyup cache'i günceller",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Range data reloaded successfully"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 53
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -183,6 +514,186 @@
                 }
               }
             }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/range-details/lifestyle/{group}": {
+      "get": {
+        "tags": ["Range Details"],
+        "summary": "Life Style Grup'a göre detayları filtrele",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["Business", "Essential", "Mono", "Tema"]
+            },
+            "example": "Mono"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "group": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeDetailData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/range-details/product/{group}": {
+      "get": {
+        "tags": ["Range Details"],
+        "summary": "Ürün Alt Grup'a göre detayları filtrele",
+        "parameters": [
+          {
+            "name": "group",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "example": "ELBISE"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "productGroup": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeDetailData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/range-details/fabric/{type}": {
+      "get": {
+        "tags": ["Range Details"],
+        "summary": "Kumaş tipine göre filtrele",
+        "parameters": [
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": ["Dokuma", "Triko", "Örme", "Kumaş Mix"]
+            },
+            "example": "Dokuma"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "fabricType": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeDetailData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -213,30 +724,44 @@
         ],
         "responses": {
           "200": {
-            "description": "Başarılı"
-          }
-        }
-      }
-    },
-    "/api/range-details/fabric/{type}": {
-      "get": {
-        "tags": ["Range Details"],
-        "summary": "Kumaş tipine göre filtrele",
-        "parameters": [
-          {
-            "name": "type",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "enum": ["Dokuma", "Triko", "Örme", "Kumaş Mix"]
-            },
-            "example": "Dokuma"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Başarılı"
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "lifeStyleGroup": {
+                      "type": "string"
+                    },
+                    "productGroup": {
+                      "type": "string"
+                    },
+                    "count": {
+                      "type": "integer"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeDetailData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -247,7 +772,52 @@
         "summary": "Kumaş tipi bazında özet",
         "responses": {
           "200": {
-            "description": "Başarılı"
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "summary": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kumasTipi": {
+                            "type": "string"
+                          },
+                          "pOpt": {
+                            "type": "integer"
+                          },
+                          "gOpt": {
+                            "type": "integer"
+                          },
+                          "fark": {
+                            "type": "integer"
+                          },
+                          "oran": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -336,6 +906,16 @@
         "responses": {
           "200": {
             "description": "Başarılı"
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -362,39 +942,20 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "marka": {
-                            "type": "string"
-                          },
-                          "kategori": {
-                            "type": "string"
-                          },
-                          "lifeStyleGrup": {
-                            "type": "string"
-                          },
-                          "urunAltGrup": {
-                            "type": "string"
-                          },
-                          "pOpt": {
-                            "type": "integer"
-                          },
-                          "tOpt": {
-                            "type": "integer"
-                          },
-                          "gOpt": {
-                            "type": "integer"
-                          },
-                          "fark": {
-                            "type": "integer"
-                          },
-                          "oran": {
-                            "type": "string"
-                          }
-                        }
+                        "$ref": "#/components/schemas/PLMRangeData"
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -410,6 +971,16 @@
         "responses": {
           "200": {
             "description": "Başarılı"
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -436,33 +1007,20 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "temaAdi": {
-                            "type": "string"
-                          },
-                          "temaId": {
-                            "type": "integer"
-                          },
-                          "pOpt": {
-                            "type": "integer"
-                          },
-                          "tOpt": {
-                            "type": "integer"
-                          },
-                          "gOpt": {
-                            "type": "integer"
-                          },
-                          "fark": {
-                            "type": "integer"
-                          },
-                          "oran": {
-                            "type": "string"
-                          }
-                        }
+                        "$ref": "#/components/schemas/PLMThemeData"
                       }
                     }
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -478,6 +1036,16 @@
         "responses": {
           "200": {
             "description": "Başarılı"
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -505,120 +1073,23 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "subCategory": {
-                            "type": "string",
-                            "example": "BLUZ"
-                          },
-                          "subCategoryId": {
-                            "type": "integer",
-                            "example": 21
-                          },
-                          "agu": {
-                            "type": "object",
-                            "properties": {
-                              "plan": {
-                                "type": "integer",
-                                "description": "Planlanan option sayısı"
-                              },
-                              "tOpt": {
-                                "type": "integer",
-                                "description": "Taslak option sayısı (Status=1)"
-                              },
-                              "gOpt": {
-                                "type": "integer",
-                                "description": "Gerçekleşen option sayısı (Status!=1)"
-                              },
-                              "total": {
-                                "type": "integer",
-                                "description": "Toplam option (tOpt + gOpt)"
-                              },
-                              "fark": {
-                                "type": "integer",
-                                "description": "Fark (total - plan). Pozitif=Fazla, Negatif=Eksik"
-                              },
-                              "oran": {
-                                "type": "string",
-                                "example": "87%"
-                              }
-                            }
-                          },
-                          "eyl": {
-                            "type": "object",
-                            "description": "Eylül dönemi (ThemeId: 1121, 1122, 1126)"
-                          },
-                          "ekm": {
-                            "type": "object",
-                            "description": "Ekim dönemi (ThemeId: 1123, 1124, 1127)"
-                          },
-                          "top": {
-                            "type": "object",
-                            "properties": {
-                              "plan": {
-                                "type": "integer"
-                              },
-                              "total": {
-                                "type": "integer"
-                              },
-                              "fark": {
-                                "type": "integer"
-                              },
-                              "oran": {
-                                "type": "string"
-                              }
-                            }
-                          }
-                        }
+                        "$ref": "#/components/schemas/DClusterData"
                       }
                     },
                     "meta": {
-                      "type": "object",
-                      "properties": {
-                        "description": {
-                          "type": "string",
-                          "example": "D-Cluster ürünleri (FreeFieldOne=D)"
-                        },
-                        "themeGroups": {
-                          "type": "object",
-                          "properties": {
-                            "AGU": {
-                              "type": "array",
-                              "items": {
-                                "type": "integer"
-                              },
-                              "example": [1118, 1119, 1120, 1125]
-                            },
-                            "EYL": {
-                              "type": "array",
-                              "items": {
-                                "type": "integer"
-                              },
-                              "example": [1121, 1122, 1126]
-                            },
-                            "EKM": {
-                              "type": "array",
-                              "items": {
-                                "type": "integer"
-                              },
-                              "example": [1123, 1124, 1127]
-                            }
-                          }
-                        },
-                        "excludeRules": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "example": [
-                            "ColorwayStatus = 4 (iptal)",
-                            "ThemeId = 1172 (iptal)",
-                            "FreeFieldOne != D (sadece D cluster)"
-                          ]
-                        }
-                      }
+                      "$ref": "#/components/schemas/DClusterMeta"
                     }
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -649,124 +1120,23 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "type": "object",
-                        "properties": {
-                          "marka": {
-                            "type": "string",
-                            "example": "IPEKYOL"
-                          },
-                          "brandId": {
-                            "type": "integer"
-                          },
-                          "opsiyonKodu": {
-                            "type": "string",
-                            "nullable": true,
-                            "description": "Placeholder kodu (PH1, PH2, ...). null ise planlanmamış",
-                            "example": "PH1"
-                          },
-                          "urunGrubu": {
-                            "type": "string",
-                            "example": "BLUZ"
-                          },
-                          "subCategoryId": {
-                            "type": "integer"
-                          },
-                          "urunAltGrup": {
-                            "type": "string",
-                            "example": "BLUZ"
-                          },
-                          "subSubCategoryId": {
-                            "type": "integer"
-                          },
-                          "fashionPyramid": {
-                            "type": "string",
-                            "nullable": true,
-                            "example": "Fashion Newness"
-                          },
-                          "fashionPyramidId": {
-                            "type": "integer",
-                            "nullable": true
-                          },
-                          "lifeStyleGrup": {
-                            "type": "string",
-                            "nullable": true,
-                            "example": "Tema"
-                          },
-                          "lifeStyleGrupId": {
-                            "type": "integer",
-                            "nullable": true
-                          },
-                          "ft": {
-                            "type": "string",
-                            "nullable": true,
-                            "example": "FT"
-                          },
-                          "ftId": {
-                            "type": "integer",
-                            "nullable": true
-                          },
-                          "segment": {
-                            "type": "string",
-                            "nullable": true,
-                            "example": "Segment 3"
-                          },
-                          "segmentId": {
-                            "type": "integer",
-                            "nullable": true
-                          },
-                          "planOptionSay": {
-                            "type": "integer",
-                            "description": "Planlanan option sayısı (0 veya 1)"
-                          },
-                          "gerceklesenOptionSay": {
-                            "type": "integer",
-                            "description": "Gerçekleşen colorway sayısı"
-                          },
-                          "gerceklesenUrunKodu": {
-                            "type": "string",
-                            "description": "Gerçekleşen StyleCode'lar (virgülle ayrılmış)"
-                          },
-                          "gerceklesenRenkKodu": {
-                            "type": "string",
-                            "description": "Gerçekleşen Colorway Code'lar"
-                          },
-                          "gerceklesenRenkAdi": {
-                            "type": "string",
-                            "description": "Gerçekleşen Colorway Name'ler"
-                          }
-                        }
+                        "$ref": "#/components/schemas/RangeCountSourceData"
                       }
                     },
                     "summary": {
-                      "type": "object",
-                      "properties": {
-                        "toplamPlanlanan": {
-                          "type": "integer"
-                        },
-                        "toplamGerceklesen": {
-                          "type": "integer"
-                        },
-                        "fark": {
-                          "type": "integer"
-                        },
-                        "eslesen": {
-                          "type": "integer",
-                          "description": "Plan=1 ve Gerçekleşen>0"
-                        },
-                        "sadecePlanlanan": {
-                          "type": "integer",
-                          "description": "Plan=1, Gerçekleşen=0"
-                        },
-                        "sadaceGerceklesen": {
-                          "type": "integer",
-                          "description": "Plan=0, Gerçekleşen>0"
-                        },
-                        "toplamKayit": {
-                          "type": "integer"
-                        }
-                      }
+                      "$ref": "#/components/schemas/RangeCountSourceSummary"
                     }
                   }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -781,7 +1151,255 @@
         "description": "Ham data olmadan sadece özet metrikler",
         "responses": {
           "200": {
-            "description": "Başarılı"
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "summary": {
+                      "$ref": "#/components/schemas/RangeCountSourceSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/range-v5": {
+      "get": {
+        "tags": ["Range V5"],
+        "summary": "Range özellik takibi (unpivot)",
+        "description": "RangeSayacv5.xlsx bazlı placeholder seviyesinde plan vs gerçekleşen. Her satır = 1 placeholder + eşleşen colorway. PLM'den Extended Field değerleri (Range Tag) ile eşleştirilir.",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 450
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RangeV5Data"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/range-v5/summary": {
+      "get": {
+        "tags": ["Range V5"],
+        "summary": "Range V5 özet istatistikleri",
+        "description": "Marka, range ve CUD5 bazında plan vs gerçekleşen özet istatistikler",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "object",
+                          "properties": {
+                            "totalPlaceholders": {
+                              "type": "integer"
+                            },
+                            "plan": {
+                              "type": "integer"
+                            },
+                            "gerceklesen": {
+                              "type": "integer"
+                            },
+                            "fark": {
+                              "type": "integer"
+                            },
+                            "oran": {
+                              "type": "string",
+                              "example": "87%"
+                            }
+                          }
+                        },
+                        "byMarka": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/GroupSummaryItem"
+                          }
+                        },
+                        "byRange": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/GroupSummaryItem"
+                          }
+                        },
+                        "byCUD5": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "cud5Id": {
+                                "type": "integer",
+                                "nullable": true
+                              },
+                              "plan": {
+                                "type": "integer"
+                              },
+                              "gerceklesen": {
+                                "type": "integer"
+                              },
+                              "fark": {
+                                "type": "integer"
+                              },
+                              "oran": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/style-costing": {
+      "get": {
+        "tags": ["Style Costing"],
+        "summary": "Colorway bazlı maliyet verileri",
+        "description": "PLM'den SupplierId=2 (Hedef Maliyet) için her colorway'in tüm cost element ve extended field değerleri. SeasonId=10, BrandId in (4,8), DivisionId=6 filtresi uygulanır. İptal edilen colorwaylar (Status=4) hariç tutulur.",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "count": {
+                      "type": "integer",
+                      "example": 750
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StyleCostingData"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/style-costing/summary": {
+      "get": {
+        "tags": ["Style Costing"],
+        "summary": "Costing verileri özeti",
+        "description": "Toplam colorway sayısı, costing verisi olan/olmayan dağılımı, marka ve kategori listesi ile dinamik cost element ve extended field kolonu isimleri",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "summary": {
+                      "$ref": "#/components/schemas/StyleCostingSummary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -806,38 +1424,10 @@
                       "type": "object",
                       "properties": {
                         "urunKategorisi": {
-                          "type": "object",
-                          "properties": {
-                            "toplamPOpt": {
-                              "type": "integer"
-                            },
-                            "toplamGOpt": {
-                              "type": "integer"
-                            },
-                            "fark": {
-                              "type": "integer"
-                            },
-                            "tamamlanmaOrani": {
-                              "type": "string"
-                            }
-                          }
+                          "$ref": "#/components/schemas/BannerMetric"
                         },
                         "tema": {
-                          "type": "object",
-                          "properties": {
-                            "toplamPOpt": {
-                              "type": "integer"
-                            },
-                            "toplamGOpt": {
-                              "type": "integer"
-                            },
-                            "fark": {
-                              "type": "integer"
-                            },
-                            "tamamlanmaOrani": {
-                              "type": "string"
-                            }
-                          }
+                          "$ref": "#/components/schemas/BannerMetric"
                         }
                       }
                     }
@@ -845,22 +1435,13 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/api/token": {
-      "get": {
-        "tags": ["Token"],
-        "summary": "PLM Access Token Al",
-        "description": "OAuth2.0 access token döndürür",
-        "responses": {
-          "200": {
-            "description": "Başarılı",
+          },
+          "500": {
+            "description": "Hata",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TokenResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -871,6 +1452,44 @@
   },
   "components": {
     "schemas": {
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "accessToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string",
+            "example": "Bearer"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "RangeData": {
         "type": "object",
         "properties": {
@@ -898,12 +1517,12 @@
           },
           "tOpt": {
             "type": "integer",
-            "description": "Taslak option sayısı",
+            "description": "Taslak option sayısı (ColorwayStatus=1)",
             "example": 4
           },
           "gOpt": {
             "type": "integer",
-            "description": "Gerçekleşen option sayısı",
+            "description": "Gerçekleşen option sayısı (ColorwayStatus!=1)",
             "example": 53
           },
           "fark": {
@@ -1020,22 +1639,603 @@
           }
         }
       },
-      "TokenResponse": {
+      "PLMRangeData": {
         "type": "object",
         "properties": {
-          "success": {
-            "type": "boolean"
-          },
-          "accessToken": {
+          "marka": {
             "type": "string"
           },
-          "tokenType": {
-            "type": "string",
-            "example": "Bearer"
+          "kategori": {
+            "type": "string"
           },
-          "expiresAt": {
+          "lifeStyleGrup": {
+            "type": "string"
+          },
+          "urunAltGrup": {
+            "type": "string"
+          },
+          "pOpt": {
+            "type": "integer"
+          },
+          "tOpt": {
+            "type": "integer"
+          },
+          "gOpt": {
+            "type": "integer"
+          },
+          "fark": {
+            "type": "integer"
+          },
+          "oran": {
+            "type": "string"
+          }
+        }
+      },
+      "PLMThemeData": {
+        "type": "object",
+        "properties": {
+          "temaAdi": {
+            "type": "string"
+          },
+          "temaId": {
+            "type": "integer"
+          },
+          "pOpt": {
+            "type": "integer"
+          },
+          "tOpt": {
+            "type": "integer"
+          },
+          "gOpt": {
+            "type": "integer"
+          },
+          "fark": {
+            "type": "integer"
+          },
+          "oran": {
+            "type": "string"
+          }
+        }
+      },
+      "DClusterPeriod": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "integer",
+            "description": "Planlanan option sayısı"
+          },
+          "tOpt": {
+            "type": "integer",
+            "description": "Taslak option sayısı (Status=1)"
+          },
+          "gOpt": {
+            "type": "integer",
+            "description": "Gerçekleşen option sayısı (Status!=1)"
+          },
+          "total": {
+            "type": "integer",
+            "description": "Toplam option (tOpt + gOpt)"
+          },
+          "fark": {
+            "type": "integer",
+            "description": "Fark (total - plan). Pozitif=Fazla, Negatif=Eksik"
+          },
+          "oran": {
             "type": "string",
-            "format": "date-time"
+            "example": "87%"
+          }
+        }
+      },
+      "DClusterData": {
+        "type": "object",
+        "properties": {
+          "subCategory": {
+            "type": "string",
+            "example": "BLUZ"
+          },
+          "subCategoryId": {
+            "type": "integer",
+            "example": 21
+          },
+          "agu": {
+            "$ref": "#/components/schemas/DClusterPeriod",
+            "description": "Ağustos dönemi (ThemeId: 1118, 1119, 1120, 1125)"
+          },
+          "eyl": {
+            "$ref": "#/components/schemas/DClusterPeriod",
+            "description": "Eylül dönemi (ThemeId: 1121, 1122, 1126)"
+          },
+          "ekm": {
+            "$ref": "#/components/schemas/DClusterPeriod",
+            "description": "Ekim dönemi (ThemeId: 1123, 1124, 1127)"
+          },
+          "top": {
+            "type": "object",
+            "properties": {
+              "plan": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              },
+              "fark": {
+                "type": "integer"
+              },
+              "oran": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "DClusterMeta": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string",
+            "example": "D-Cluster ürünleri (FreeFieldOne=D)"
+          },
+          "themeGroups": {
+            "type": "object",
+            "properties": {
+              "AGU": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "example": [1118, 1119, 1120, 1125]
+              },
+              "EYL": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "example": [1121, 1122, 1126]
+              },
+              "EKM": {
+                "type": "array",
+                "items": {
+                  "type": "integer"
+                },
+                "example": [1123, 1124, 1127]
+              }
+            }
+          },
+          "excludeRules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "ColorwayStatus = 4 (iptal)",
+              "ThemeId = 1172 (iptal)",
+              "FreeFieldOne != D (sadece D cluster)"
+            ]
+          }
+        }
+      },
+      "RangeCountSourceData": {
+        "type": "object",
+        "properties": {
+          "marka": {
+            "type": "string",
+            "example": "IPEKYOL"
+          },
+          "brandId": {
+            "type": "integer"
+          },
+          "opsiyonKodu": {
+            "type": "string",
+            "nullable": true,
+            "description": "Placeholder kodu (PH1, PH2, ...). null ise planlanmamış",
+            "example": "PH1"
+          },
+          "urunGrubu": {
+            "type": "string",
+            "example": "BLUZ"
+          },
+          "subCategoryId": {
+            "type": "integer"
+          },
+          "urunAltGrup": {
+            "type": "string",
+            "example": "BLUZ"
+          },
+          "subSubCategoryId": {
+            "type": "integer"
+          },
+          "fashionPyramid": {
+            "type": "string",
+            "nullable": true,
+            "example": "Fashion Newness"
+          },
+          "fashionPyramidId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "lifeStyleGrup": {
+            "type": "string",
+            "nullable": true,
+            "example": "Tema"
+          },
+          "lifeStyleGrupId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "ft": {
+            "type": "string",
+            "nullable": true,
+            "example": "FT"
+          },
+          "ftId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "segment": {
+            "type": "string",
+            "nullable": true,
+            "example": "Segment 3"
+          },
+          "segmentId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "planOptionSay": {
+            "type": "integer",
+            "description": "Planlanan option sayısı (0 veya 1)"
+          },
+          "gerceklesenOptionSay": {
+            "type": "integer",
+            "description": "Gerçekleşen colorway sayısı"
+          },
+          "gerceklesenUrunKodu": {
+            "type": "string",
+            "description": "Gerçekleşen StyleCode'lar (virgülle ayrılmış)"
+          },
+          "gerceklesenRenkKodu": {
+            "type": "string",
+            "description": "Gerçekleşen Colorway Code'lar"
+          },
+          "gerceklesenRenkAdi": {
+            "type": "string",
+            "description": "Gerçekleşen Colorway Name'ler"
+          }
+        }
+      },
+      "RangeCountSourceSummary": {
+        "type": "object",
+        "properties": {
+          "toplamPlanlanan": {
+            "type": "integer"
+          },
+          "toplamGerceklesen": {
+            "type": "integer"
+          },
+          "fark": {
+            "type": "integer"
+          },
+          "eslesen": {
+            "type": "integer",
+            "description": "Plan=1 ve Gerçekleşen>0"
+          },
+          "sadecePlanlanan": {
+            "type": "integer",
+            "description": "Plan=1, Gerçekleşen=0"
+          },
+          "sadaceGerceklesen": {
+            "type": "integer",
+            "description": "Plan=0, Gerçekleşen>0"
+          },
+          "toplamKayit": {
+            "type": "integer"
+          }
+        }
+      },
+      "RangeV5Data": {
+        "type": "object",
+        "description": "Her satır = 1 placeholder + eşleşen colorway (veya eşleşmeyen placeholder)",
+        "properties": {
+          "placeholderId": {
+            "type": "string",
+            "description": "Placeholder benzersiz kimliği"
+          },
+          "marka": {
+            "type": "string",
+            "example": "IPEKYOL"
+          },
+          "brandId": {
+            "type": "integer",
+            "example": 4
+          },
+          "urunGrubu": {
+            "type": "string",
+            "description": "SubCategory adı",
+            "example": "BLUZ"
+          },
+          "subSubCategoryId": {
+            "type": "integer"
+          },
+          "rangeTag": {
+            "type": "string",
+            "description": "Range özellik etiketi (ExtFldId adı)",
+            "example": "Fashion Pyramid"
+          },
+          "range": {
+            "type": "string",
+            "description": "Range değeri (dropdown)",
+            "example": "Fashion Newness"
+          },
+          "extFldId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Extended Field ID"
+          },
+          "rangeDetayi": {
+            "type": "string",
+            "nullable": true
+          },
+          "dropDownValue": {
+            "type": "string"
+          },
+          "cud5Id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "plan": {
+            "type": "integer",
+            "description": "Her zaman 1 (planlanan placeholder)",
+            "example": 1
+          },
+          "gerceklesen": {
+            "type": "integer",
+            "description": "1 = eşleşen colorway bulundu, 0 = eşleşme yok",
+            "example": 1
+          },
+          "styleId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "styleCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "colorwayId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "colorwayCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "colorwayName": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "StyleCostingData": {
+        "type": "object",
+        "description": "Her satır = 1 colorway. Cost element ve extended field kolonları PLM yapısına göre dinamik olarak eklenir.",
+        "properties": {
+          "styleId": {
+            "type": "integer"
+          },
+          "styleCode": {
+            "type": "string",
+            "example": "IS1260002101"
+          },
+          "numericValue1": {
+            "type": "number",
+            "nullable": true,
+            "description": "FOB hedef fiyat (USD)"
+          },
+          "quantity": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Adet"
+          },
+          "deliveryIdList": {
+            "type": "string",
+            "nullable": true
+          },
+          "remark": {
+            "type": "string",
+            "nullable": true
+          },
+          "marka": {
+            "type": "string",
+            "example": "IPEKYOL"
+          },
+          "brandId": {
+            "type": "integer"
+          },
+          "urunGrubu": {
+            "type": "string",
+            "example": "BLUZ"
+          },
+          "subCategoryId": {
+            "type": "integer"
+          },
+          "urunAltGrubu": {
+            "type": "string",
+            "nullable": true
+          },
+          "subSubCategoryId": {
+            "type": "integer",
+            "nullable": true
+          },
+          "marketField5": {
+            "type": "string",
+            "nullable": true
+          },
+          "udf5": {
+            "type": "string",
+            "nullable": true
+          },
+          "udf5Id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "colorwayId": {
+            "type": "integer"
+          },
+          "colorwayCode": {
+            "type": "string"
+          },
+          "colorwayName": {
+            "type": "string"
+          },
+          "colorwayStatus": {
+            "type": "integer",
+            "description": "Colorway durumu (1=Taslak, 4=İptal, diğer=Aktif)"
+          },
+          "minimumQuantity": {
+            "type": "integer",
+            "nullable": true
+          },
+          "colorwayUserField1": {
+            "type": "string",
+            "nullable": true,
+            "description": "Fashion Pyramid değeri"
+          },
+          "colorwayUserField4": {
+            "type": "string",
+            "nullable": true
+          },
+          "colorwayUserField5": {
+            "type": "string",
+            "nullable": true
+          },
+          "freeFieldOne": {
+            "type": "string",
+            "nullable": true,
+            "description": "Cluster değeri (B, D, vb.)"
+          },
+          "freeFieldFive": {
+            "type": "string",
+            "nullable": true
+          },
+          "cud4": {
+            "type": "string",
+            "nullable": true
+          },
+          "cud4Id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "cud5": {
+            "type": "string",
+            "nullable": true
+          },
+          "cud5Id": {
+            "type": "integer",
+            "nullable": true
+          },
+          "themeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "themeName": {
+            "type": "string",
+            "nullable": true
+          },
+          "themeDescription": {
+            "type": "string",
+            "nullable": true
+          },
+          "hasCostingData": {
+            "type": "boolean",
+            "description": "SupplierId=2 için costing verisi var mı"
+          },
+          "styleCostingSupplierId": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Hedef maliyet supplier kaydı ID'si"
+          }
+        },
+        "additionalProperties": {
+          "type": "number",
+          "nullable": true,
+          "description": "Dinamik cost element ve extended field değerleri (RPSF, RMU, CMT, vb.)"
+        }
+      },
+      "StyleCostingSummary": {
+        "type": "object",
+        "properties": {
+          "totalColorways": {
+            "type": "integer"
+          },
+          "withCostingData": {
+            "type": "integer"
+          },
+          "withoutCostingData": {
+            "type": "integer"
+          },
+          "uniqueStyles": {
+            "type": "integer"
+          },
+          "brands": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": ["IPEKYOL", "TWIST"]
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "costElements": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Mevcut cost element kolon isimleri"
+          },
+          "extendedFields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Mevcut extended field kolon isimleri"
+          }
+        }
+      },
+      "GroupSummaryItem": {
+        "type": "object",
+        "properties": {
+          "plan": {
+            "type": "integer"
+          },
+          "gerceklesen": {
+            "type": "integer"
+          },
+          "fark": {
+            "type": "integer"
+          },
+          "oran": {
+            "type": "string",
+            "example": "87%"
+          }
+        }
+      },
+      "BannerMetric": {
+        "type": "object",
+        "properties": {
+          "toplamPOpt": {
+            "type": "integer"
+          },
+          "toplamGOpt": {
+            "type": "integer"
+          },
+          "fark": {
+            "type": "integer"
+          },
+          "tamamlanmaOrani": {
+            "type": "string",
+            "example": "87%"
           }
         }
       },
@@ -1066,36 +2266,28 @@
             "type": "object",
             "properties": {
               "sellout": {
-                "type": "integer",
-                "description": "Satış adedi"
+                "type": "integer"
               },
               "markdown": {
-                "type": "number",
-                "description": "İndirim oranı %"
+                "type": "number"
               },
               "ros": {
-                "type": "number",
-                "description": "Rate of Sale %"
+                "type": "number"
               },
               "fobCostUSD": {
-                "type": "number",
-                "description": "FOB maliyet (USD)"
+                "type": "number"
               },
               "fabricCost": {
-                "type": "number",
-                "description": "Kumaş maliyeti (USD)"
+                "type": "number"
               },
               "trimCost": {
-                "type": "number",
-                "description": "Aksesuar maliyeti (USD)"
+                "type": "number"
               },
               "laborCost": {
-                "type": "number",
-                "description": "İşçilik maliyeti (USD)"
+                "type": "number"
               },
               "embroideryCost": {
-                "type": "number",
-                "description": "Nakış maliyeti (USD)"
+                "type": "number"
               }
             }
           }
@@ -1104,4 +2296,3 @@
     }
   }
 }
-
