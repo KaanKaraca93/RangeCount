@@ -16,6 +16,7 @@ const rangeV7Routes = require('./routes/rangeV7.routes');
 const rangeV5Routes = require('./routes/rangeV5.routes');
 const styleCostingRoutes = require('./routes/styleCosting.routes');
 const bannerRoutes = require('./routes/banner.routes');
+const plmThemeCategoryRoutes = require('./routes/plmThemeCategory.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,6 +46,7 @@ app.use('/api/range-v7', rangeV7Routes);
 app.use('/api/range-v5', rangeV5Routes);
 app.use('/api/style-costing', styleCostingRoutes);
 app.use('/api', bannerRoutes);
+app.use('/api/theme-category', plmThemeCategoryRoutes);
 
 // Widget HTML endpoint
 app.get('/widget.html', (req, res) => {

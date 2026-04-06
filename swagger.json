@@ -65,6 +65,10 @@
       "description": "V5 mantığının devamı — Rangesayacv7.xlsx (ID bazlı), SeasonId + FreeFieldThree (Faz) matching eklendi"
     },
     {
+      "name": "Theme Category",
+      "description": "Tema + Ürün Kategorisi (SubCategory) bazlı plan vs gerçekleşen takibi — widget için StyleId/ColorwayId/ColorCode içerir"
+    },
+    {
       "name": "Style Costing",
       "description": "PLM'den colorway bazlı maliyet bilgileri (SupplierId=2 Hedef Maliyet)"
     },
@@ -1596,8 +1600,164 @@
       }
     }
   },
+  "/api/theme-category": {
+    "get": {
+      "tags": ["Theme Category"],
+      "summary": "Tema + Kategori bazlı plan vs gerçekleşen detayı",
+      "description": "Her tema-kategori kombinasyonu için pOpt, tOpt, gOpt ve gerçekleşen colorway listesi döner",
+      "parameters": [
+        { "in": "query", "name": "themeId", "schema": { "type": "integer" }, "description": "PLM ThemeId filtresi" },
+        { "in": "query", "name": "subCategoryId", "schema": { "type": "integer" }, "description": "PLM SubCategoryId filtresi" },
+        { "in": "query", "name": "seasonId", "schema": { "type": "integer" }, "description": "SeasonId filtresi" },
+        { "in": "query", "name": "faz", "schema": { "type": "string" }, "description": "Faz filtresi (SEMI PLAN / PLAN)" },
+        { "in": "query", "name": "onlyWithPlan", "schema": { "type": "boolean" }, "description": "true ise sadece pOpt > 0 satırları döner" }
+      ],
+      "responses": {
+        "200": {
+          "description": "Başarılı",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "count": { "type": "integer" },
+                  "data": { "type": "array", "items": { "$ref": "#/components/schemas/ThemeCategoryData" } }
+                }
+              }
+            }
+          }
+        },
+        "500": { "description": "Sunucu hatası", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+      }
+    }
+  },
+  "/api/theme-category/summary": {
+    "get": {
+      "tags": ["Theme Category"],
+      "summary": "Tema bazlı özet (kategori breakdown olmadan)",
+      "parameters": [
+        { "in": "query", "name": "seasonId", "schema": { "type": "integer" } },
+        { "in": "query", "name": "faz", "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "Başarılı",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "temaSayisi": { "type": "integer" },
+                  "toplamPlanlanan": { "type": "integer" },
+                  "toplamGerceklesen": { "type": "integer" },
+                  "toplamTaslak": { "type": "integer" },
+                  "genelOran": { "type": "string" },
+                  "data": { "type": "array", "items": { "$ref": "#/components/schemas/ThemeCategorySummary" } }
+                }
+              }
+            }
+          }
+        },
+        "500": { "description": "Sunucu hatası", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+      }
+    }
+  },
+  "/api/theme-category/actuals": {
+    "get": {
+      "tags": ["Theme Category"],
+      "summary": "Gerçekleşen colorway detayı — widget için StyleId/ColorwayId/ColorCode",
+      "parameters": [
+        { "in": "query", "name": "themeId", "schema": { "type": "integer" } },
+        { "in": "query", "name": "subCategoryId", "schema": { "type": "integer" } },
+        { "in": "query", "name": "seasonId", "schema": { "type": "integer" } },
+        { "in": "query", "name": "faz", "schema": { "type": "string" } }
+      ],
+      "responses": {
+        "200": {
+          "description": "Başarılı",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "count": { "type": "integer" },
+                  "data": { "type": "array", "items": { "$ref": "#/components/schemas/ThemeCategoryActual" } }
+                }
+              }
+            }
+          }
+        },
+        "500": { "description": "Sunucu hatası", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
+      }
+    }
+  },
   "components": {
     "schemas": {
+      "ThemeCategoryData": {
+        "type": "object",
+        "properties": {
+          "marka":         { "type": "string",  "example": "IPEKYOL" },
+          "brandId":       { "type": "integer", "example": 4 },
+          "seasonId":      { "type": "integer", "example": 10 },
+          "faz":           { "type": "string",  "example": "SEMI PLAN" },
+          "temaAdi":       { "type": "string",  "example": "B-BCT2" },
+          "temaId":        { "type": "integer", "example": 1293 },
+          "kategori":      { "type": "string",  "example": "TRIKO" },
+          "subCategoryId": { "type": "integer", "example": 23 },
+          "pOpt":          { "type": "integer", "example": 4 },
+          "tOpt":          { "type": "integer", "example": 1 },
+          "gOpt":          { "type": "integer", "example": 2 },
+          "fark":          { "type": "integer", "example": 2 },
+          "oran":          { "type": "string",  "example": "50%" },
+          "gerceklesenler": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ThemeCategoryActualItem" }
+          }
+        }
+      },
+      "ThemeCategoryActualItem": {
+        "type": "object",
+        "properties": {
+          "styleId":    { "type": "string",  "example": "abc123-..." },
+          "styleCode":  { "type": "string",  "example": "IPK-001" },
+          "colorwayId": { "type": "string",  "example": "xyz456-..." },
+          "colorCode":  { "type": "string",  "example": "001" },
+          "colorName":  { "type": "string",  "example": "SİYAH" },
+          "seasonId":   { "type": "integer", "example": 10 },
+          "faz":        { "type": "string",  "example": "SEMI PLAN" }
+        }
+      },
+      "ThemeCategorySummary": {
+        "type": "object",
+        "properties": {
+          "temaAdi":  { "type": "string",  "example": "B-BCT2" },
+          "temaId":   { "type": "integer", "example": 1293 },
+          "marka":    { "type": "string",  "example": "IPEKYOL" },
+          "seasonId": { "type": "integer", "example": 10 },
+          "faz":      { "type": "string",  "example": "SEMI PLAN" },
+          "pOpt":     { "type": "integer", "example": 18 },
+          "tOpt":     { "type": "integer", "example": 3 },
+          "gOpt":     { "type": "integer", "example": 10 },
+          "fark":     { "type": "integer", "example": 8 },
+          "oran":     { "type": "string",  "example": "56%" }
+        }
+      },
+      "ThemeCategoryActual": {
+        "type": "object",
+        "properties": {
+          "temaAdi":       { "type": "string" },
+          "temaId":        { "type": "integer" },
+          "kategori":      { "type": "string" },
+          "subCategoryId": { "type": "integer" },
+          "faz":           { "type": "string" },
+          "styleId":       { "type": "string" },
+          "styleCode":     { "type": "string" },
+          "colorwayId":    { "type": "string" },
+          "colorCode":     { "type": "string" },
+          "colorName":     { "type": "string" },
+          "seasonId":      { "type": "integer" }
+        }
+      },
       "ErrorResponse": {
         "type": "object",
         "properties": {
