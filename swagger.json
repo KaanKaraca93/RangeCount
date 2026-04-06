@@ -1598,8 +1598,7 @@
           }
         }
       }
-    }
-  },
+    },
   "/api/theme-category": {
     "get": {
       "tags": ["Theme Category"],
@@ -1690,6 +1689,7 @@
         "500": { "description": "Sunucu hatası", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } } }
       }
     }
+  }
   },
   "components": {
     "schemas": {
