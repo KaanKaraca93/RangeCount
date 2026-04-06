@@ -57,6 +57,14 @@
       "description": "RangeSayacv5.xlsx bazlı range özellik takibi - placeholder seviyesinde unpivot veri"
     },
     {
+      "name": "Range Count Source V6",
+      "description": "V4 mantığının devamı — RangeSayacv6.xlsx (ID bazlı), SeasonId + FreeFieldThree (Faz) matching eklendi"
+    },
+    {
+      "name": "Range V7",
+      "description": "V5 mantığının devamı — Rangesayacv7.xlsx (ID bazlı), SeasonId + FreeFieldThree (Faz) matching eklendi"
+    },
+    {
       "name": "Style Costing",
       "description": "PLM'den colorway bazlı maliyet bilgileri (SupplierId=2 Hedef Maliyet)"
     },
@@ -1322,6 +1330,144 @@
         }
       }
     },
+    "/api/range-count-source-v6": {
+      "get": {
+        "tags": ["Range Count Source V6"],
+        "summary": "Placeholder bazlı plan vs gerçekleşen — V6 (SeasonId + Faz)",
+        "description": "RangeSayacv6.xlsx bazlı ham data. V4 ile aynı format + `seasonId` ve `faz` alanları. Matching: Brand + SubCat + SubSubCat + CUD1 + CUD4 + CUD5 + UDF5 + **SeasonId** + **FreeFieldThree**. Sadece B-Cluster.",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "count": { "type": "integer", "example": 900 },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/RangeCountSourceV6Data" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/range-count-source-v6/summary": {
+      "get": {
+        "tags": ["Range Count Source V6"],
+        "summary": "V6 özet istatistikler",
+        "description": "Toplam plan / gerçekleşen / fark / eşleşen sayıları",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "summary": { "$ref": "#/components/schemas/RangeCountSourceSummary" }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/range-v7": {
+      "get": {
+        "tags": ["Range V7"],
+        "summary": "Range özellik takibi — V7 (SeasonId + Faz)",
+        "description": "Rangesayacv7.xlsx bazlı unpivot veri. V5 ile aynı format + `seasonId` ve `faz` alanları. Matching key: BrandId + SubSubCategoryId + ExtFldId + DropDownValue + CUD5Id + **SeasonId** + **FreeFieldThree**. Sadece B-Cluster.",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "count": { "type": "integer", "example": 550 },
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/RangeV7Data" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    },
+    "/api/range-v7/summary": {
+      "get": {
+        "tags": ["Range V7"],
+        "summary": "V7 özet istatistikler (faz bazlı)",
+        "description": "Toplam plan / gerçekleşen + faz (FreeFieldThree) bazlı kırılım",
+        "responses": {
+          "200": {
+            "description": "Başarılı",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "toplamPlan": { "type": "integer" },
+                        "toplamGerceklesen": { "type": "integer" },
+                        "eslesen": { "type": "integer" },
+                        "sadecePlanlanan": { "type": "integer" },
+                        "sadaceGerceklesen": { "type": "integer" },
+                        "toplamKayit": { "type": "integer" },
+                        "fazBazinda": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "faz": { "type": "string", "example": "PLAN" },
+                              "toplamPlan": { "type": "integer" },
+                              "toplamGerceklesen": { "type": "integer" },
+                              "eslesen": { "type": "integer" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Hata",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    },
     "/api/style-costing": {
       "get": {
         "tags": ["Style Costing"],
@@ -1902,6 +2048,43 @@
           }
         }
       },
+      "RangeCountSourceV6Data": {
+        "type": "object",
+        "description": "V4 formatının aynısı + seasonId ve faz alanları",
+        "allOf": [
+          { "$ref": "#/components/schemas/RangeCountSourceData" },
+          {
+            "type": "object",
+            "properties": {
+              "seasonId": {
+                "type": "integer",
+                "nullable": true,
+                "description": "PLM Season ID (ör. 10 = FW 26/27)",
+                "example": 10
+              },
+              "faz": {
+                "type": "string",
+                "nullable": true,
+                "description": "Koleksiyon fazı (FreeFieldThree değeri)",
+                "example": "PLAN"
+              },
+              "gerceklesenPsf": {
+                "type": "string",
+                "nullable": true,
+                "description": "Gerçekleşen PSF (Perakende Satış Fiyatı)"
+              },
+              "gerceklesenHedefMarkUp": {
+                "type": "number",
+                "nullable": true
+              },
+              "gerceklesenAlimHedefFiyati": {
+                "type": "number",
+                "nullable": true
+              }
+            }
+          }
+        ]
+      },
       "RangeCountSourceSummary": {
         "type": "object",
         "properties": {
@@ -1930,6 +2113,30 @@
             "type": "integer"
           }
         }
+      },
+      "RangeV7Data": {
+        "type": "object",
+        "description": "V5 formatının aynısı + seasonId ve faz alanları",
+        "allOf": [
+          { "$ref": "#/components/schemas/RangeV5Data" },
+          {
+            "type": "object",
+            "properties": {
+              "seasonId": {
+                "type": "integer",
+                "nullable": true,
+                "description": "PLM Season ID (ör. 10 = FW 26/27)",
+                "example": 10
+              },
+              "faz": {
+                "type": "string",
+                "nullable": true,
+                "description": "Koleksiyon fazı (FreeFieldThree değeri)",
+                "example": "PLAN"
+              }
+            }
+          }
+        ]
       },
       "RangeV5Data": {
         "type": "object",
