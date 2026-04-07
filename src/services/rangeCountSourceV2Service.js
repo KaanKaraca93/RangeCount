@@ -4,6 +4,8 @@ const path = require('path');
 const tokenService = require('./tokenService');
 const PLM_CONFIG = require('../config/plm.config');
 
+const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
+
 /**
  * Eşleştirmede kullanılan GlRefId → PLM alan mapping'i
  *
@@ -279,7 +281,7 @@ class RangeCountSourceV2Service {
   matchPlaceholder(placeholder, style, colorway) {
     // ── Hariç tutma kuralları ──────────────────────────────────────
     if (colorway.FreeFieldOne !== 'B') return false;        // Sadece B cluster
-    if (colorway.Theme && colorway.Theme.Id === 1172) return false;  // İptal tema
+    if (colorway.Theme && EXCLUDED_THEME_IDS.has(colorway.Theme.Id)) return false; // İptal tema
 
     // ── Eşleştirme kriterleri ──────────────────────────────────────
 

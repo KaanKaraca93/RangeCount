@@ -6,6 +6,8 @@ const PLM_CONFIG = require('../config/plm.config');
 
 const EXCEL_FILE = 'RangeSayacv3_yeni_taslak.xlsx';
 
+const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
+
 class PlmThemeCategoryService {
   constructor() {
     this.planData = [];
@@ -94,7 +96,7 @@ class PlmThemeCategoryService {
 
       for (const cw of style.StyleColorways) {
         // 🚫 Hariç tutma kuralları
-        if (!cw.ThemeId || cw.ThemeId === 1172)               continue;
+        if (!cw.ThemeId || EXCLUDED_THEME_IDS.has(cw.ThemeId)) continue;
         if (cw.ColorwayStatus === 4)                           continue;
         if (cw.FreeFieldOne !== 'B')                           continue;
 

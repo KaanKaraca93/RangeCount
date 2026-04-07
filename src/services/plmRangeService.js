@@ -4,6 +4,8 @@ const path = require('path');
 const tokenService = require('./tokenService');
 const PLM_CONFIG = require('../config/plm.config');
 
+const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
+
 /**
  * PLM Range Service
  * Excel'den ID mapping okuyup PLM'den gerçek veri çeker
@@ -129,8 +131,8 @@ class PlmRangeService {
             continue;
           }
 
-          // 🚫 ThemeId = 1172 olanları hariç tut (iptal)
-          if (colorway.ThemeId === 1172) {
+          // 🚫 İptal temaları hariç tut
+          if (EXCLUDED_THEME_IDS.has(colorway.ThemeId)) {
             continue;
           }
 

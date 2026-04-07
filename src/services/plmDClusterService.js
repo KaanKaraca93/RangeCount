@@ -4,6 +4,8 @@ const path = require('path');
 const tokenService = require('./tokenService');
 const PLM_CONFIG = require('../config/plm.config');
 
+const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
+
 /**
  * PLM D-Cluster Service
  * D Cluster (FreeFieldOne='D') ürünlerini tema ve alt kategoriye göre sayar
@@ -140,7 +142,7 @@ class PlmDClusterService {
         for (const colorway of style.StyleColorways) {
           // 🚫 Exclude kuralları
           if (colorway.ColorwayStatus === 4) continue; // İptal
-          if (colorway.ThemeId === 1172) continue; // İptal
+          if (EXCLUDED_THEME_IDS.has(colorway.ThemeId)) continue; // İptal tema
           if (colorway.FreeFieldOne !== 'D') continue; // Sadece D cluster
 
           // Null kontrolleri

@@ -4,6 +4,8 @@ const path = require('path');
 const tokenService = require('./tokenService');
 const PLM_CONFIG = require('../config/plm.config');
 
+const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
+
 const FASHION_PYRAMID_LOOKUP = {
   1: "İMAGE", 2: "FARKLI", 4: "NORMAL", 5: "ÇOK FARKLI",
   6: "Essentials", 7: "Basics", 8: "Fashion Core",
@@ -54,7 +56,7 @@ class RangeCountSourceV6Service {
           'ProductSubSubCategory',
           'UserDefinedField5',
           // FreeFieldThree eklendi (Faz alanı), CUD5 korundu
-          'StyleColorways($select=StyleColorwayId,Code,Name,ColorwayUserField1,FreeFieldOne,FreeFieldFive,FreeFieldThree;$expand=ColorwayUserDefinedField4,ColorwayUserDefinedField5;$filter=ColorwayStatus ne 4)',
+          'StyleColorways($select=StyleColorwayId,Code,Name,ColorwayUserField1,FreeFieldOne,FreeFieldFive,FreeFieldThree,ThemeId;$expand=ColorwayUserDefinedField4,ColorwayUserDefinedField5;$filter=ColorwayStatus ne 4)',
           'StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckboxValue;$filter=ExtFldId eq a21b2b14-8ca3-49f2-8e80-b12823bf14a2 or ExtFldId eq 79cb5b20-3028-44d4-a85e-ed18c00af3c8;$orderby=ExtFldId;$expand=StyleExtendedFields($select=Name))'
         ].join(',')
       };
@@ -95,6 +97,7 @@ class RangeCountSourceV6Service {
   matchPlaceholder(placeholder, style, colorway) {
     // Sadece B cluster
     if (colorway.FreeFieldOne !== 'B') return false;
+    if (EXCLUDED_THEME_IDS.has(colorway.ThemeId)) return false; // İptal tema
 
     // ── Eski kriterler ──────────────────────────────────
     if (!(style.Brand && style.Brand.Id === placeholder.BrandId)) return false;
@@ -201,6 +204,7 @@ class RangeCountSourceV6Service {
         for (const colorway of style.StyleColorways) {
           if (!colorway) continue;
           if (colorway.FreeFieldOne !== 'B') continue;
+          if (EXCLUDED_THEME_IDS.has(colorway.ThemeId)) continue; // İptal tema
           if (matchedColorwayIds.has(colorway.StyleColorwayId)) continue;
 
           unmatchedCount++;

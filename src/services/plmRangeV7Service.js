@@ -3,6 +3,8 @@ const axios = require('axios');
 const PLM_CONFIG = require('../config/plm.config');
 const tokenService = require('./tokenService');
 
+const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
+
 /**
  * PLM Range V7 Service
  * Rangesayacv5 mantığının devamı — farklar:
@@ -50,7 +52,7 @@ class PLMRangeV7Service {
           'ProductSubSubCategory',
           'UserDefinedField5',
           // FreeFieldThree eklendi (SeasonId zaten $select=StyleId,StyleCode,SeasonId ile geliyor)
-          'StyleColorways($select=StyleColorwayId,Code,Name,FreeFieldOne,FreeFieldThree;$expand=ColorwayUserDefinedField5;$filter=ColorwayStatus ne 4)'
+          'StyleColorways($select=StyleColorwayId,Code,Name,FreeFieldOne,FreeFieldThree,ThemeId;$expand=ColorwayUserDefinedField5;$filter=ColorwayStatus ne 4)'
         ].join(',')
       };
 
@@ -161,6 +163,7 @@ class PLMRangeV7Service {
 
         style.StyleColorways.forEach(colorway => {
           if (colorway.FreeFieldOne !== 'B') return; // Sadece B cluster
+          if (EXCLUDED_THEME_IDS.has(colorway.ThemeId)) return; // İptal tema
 
           const colorwayId = colorway.StyleColorwayId;
           const colorwayCode = colorway.Code;
