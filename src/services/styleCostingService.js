@@ -2,6 +2,8 @@ const axios = require('axios');
 const tokenService = require('./tokenService');
 const PLM_CONFIG = require('../config/plm.config');
 
+const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
+
 /**
  * Style Costing Service
  * Her colorway için maliyet bilgilerini getir (SupplierId=2)
@@ -19,7 +21,7 @@ class StyleCostingService {
       const params = {
         '$select': 'StyleId,StyleCode,NumericValue1,Quantity,DeliveryIdList,Remark',
         '$filter': 'SeasonId eq 10 and BrandId in (4,8) and DivisionId eq 6 and Status ne 103 and Status ne 1',
-        '$expand': 'UserDefinedField5($select=Name),Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,ColorwayStatus,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
+        '$expand': 'UserDefinedField5($select=Name),Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,ColorwayStatus,ThemeId,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
       };
       
       console.log(`📞 PLM'den style costing verileri çekiliyor...`);
@@ -183,6 +185,9 @@ class StyleCostingService {
         // Her colorway için satır oluştur
         if (style.StyleColorways && Array.isArray(style.StyleColorways)) {
           style.StyleColorways.forEach(colorway => {
+            // 🚫 İptal temaları hariç tut
+            if (EXCLUDED_THEME_IDS.has(colorway.ThemeId)) return;
+
             const row = {
               // Style bilgileri
               styleId: style.StyleId,
