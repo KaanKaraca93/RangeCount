@@ -24,7 +24,7 @@ let
          "marka", "brandId",
          "urunGrubu", "subCategoryId",
          "urunAltGrubu", "subSubCategoryId",
-         "marketField5",
+         "marketField3", "marketField5",
          "udf5", "udf5Id",
          
          // --- Colorway boyutları ---
@@ -78,7 +78,7 @@ let
          "marka", "brandId",
          "urunGrubu", "subCategoryId",
          "urunAltGrubu", "subSubCategoryId",
-         "marketField5",
+         "marketField3", "marketField5",
          "udf5", "udf5Id",
          
          // --- Colorway boyutları ---
@@ -142,6 +142,7 @@ let
         {"subCategoryId",        Int64.Type},
         {"urunAltGrubu",         type text},
         {"subSubCategoryId",     Int64.Type},
+        {"marketField3",         type text},
         {"marketField5",         type text},
         {"udf5",                 type text},
         {"udf5Id",               Int64.Type},
