@@ -21,7 +21,7 @@ class StyleCostingService {
       const params = {
         '$select': 'StyleId,StyleCode,NumericValue1,Quantity,DeliveryIdList,Remark',
         '$filter': 'SeasonId eq 10 and BrandId in (4,8) and DivisionId eq 6 and Status ne 103 and Status ne 1',
-        '$expand': 'UserDefinedField5($select=Name),Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),Division($select=Id,Name,Code),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,Quantity,ColorwayStatus,ThemeId,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive,FreeFieldThree;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
+        '$expand': 'UserDefinedField5($select=Name),Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),Division($select=Id,Name,Code),StyleSupplier($select=Name),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,Quantity,ColorwayStatus,ThemeId,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive,FreeFieldThree;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
       };
       
       console.log(`📞 PLM'den style costing verileri çekiliyor...`);
@@ -54,22 +54,16 @@ class StyleCostingService {
    * Style'dan SupplierId=2 için StyleCostingSupplierId'yi bul
    */
   getTargetSupplierInfo(styleCosting) {
-    if (!styleCosting) return { id: null, name: null };
+    if (!styleCosting) return { id: null };
 
     const suppliers = styleCosting.StyleCostSuppliers || styleCosting.STYLECOSTSUPPLIERS || [];
 
     const targetSupplier = suppliers.find(supplier => {
-      const styleSupplier = supplier.StyleSupplier || supplier.STYLESUPPLIER;
-      return styleSupplier && styleSupplier.SupplierId === 2;
+      const ss = supplier.StyleSupplier || supplier.STYLESUPPLIER;
+      return ss && ss.SupplierId === 2;
     });
 
-    if (!targetSupplier) return { id: null, name: null };
-
-    const styleSupplier = targetSupplier.StyleSupplier || targetSupplier.STYLESUPPLIER;
-    return {
-      id:   targetSupplier.Id,
-      name: styleSupplier ? styleSupplier.SupplierName : null
-    };
+    return { id: targetSupplier ? targetSupplier.Id : null };
   }
 
   /**
@@ -239,10 +233,11 @@ class StyleCostingService {
               themeName: (colorway.theme || colorway.Theme) ? (colorway.theme || colorway.Theme).Name : null,
               themeDescription: (colorway.theme || colorway.Theme) ? (colorway.theme || colorway.Theme).Description : null,
               
-              // Costing bilgileri
+              // Ana tedarikçi (Style seviyesinden)
+              supplierName: style.StyleSupplier ? style.StyleSupplier.Name : null,
+              // Costing bilgileri (SupplierId=2 hedef maliyet)
               hasCostingData: styleCostingSupplierId ? true : false,
               styleCostingSupplierId: styleCostingSupplierId,
-              supplierName: supplierInfo.name,
               
               // Cost Elements (dinamik kolonlar)
               ...costElements,
