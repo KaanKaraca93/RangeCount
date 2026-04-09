@@ -53,22 +53,23 @@ class StyleCostingService {
   /**
    * Style'dan SupplierId=2 için StyleCostingSupplierId'yi bul
    */
-  getTargetStyleCostingSupplierId(styleCosting) {
-    if (!styleCosting) {
-      return null;
-    }
+  getTargetSupplierInfo(styleCosting) {
+    if (!styleCosting) return { id: null, name: null };
 
-    // StyleCostSuppliers case-insensitive
     const suppliers = styleCosting.StyleCostSuppliers || styleCosting.STYLECOSTSUPPLIERS || [];
-    
-    const targetSupplier = suppliers.find(
-      supplier => {
-        const styleSupplier = supplier.StyleSupplier || supplier.STYLESUPPLIER;
-        return styleSupplier && styleSupplier.SupplierId === 2;
-      }
-    );
 
-    return targetSupplier ? targetSupplier.Id : null;
+    const targetSupplier = suppliers.find(supplier => {
+      const styleSupplier = supplier.StyleSupplier || supplier.STYLESUPPLIER;
+      return styleSupplier && styleSupplier.SupplierId === 2;
+    });
+
+    if (!targetSupplier) return { id: null, name: null };
+
+    const styleSupplier = targetSupplier.StyleSupplier || targetSupplier.STYLESUPPLIER;
+    return {
+      id:   targetSupplier.Id,
+      name: styleSupplier ? styleSupplier.SupplierName : null
+    };
   }
 
   /**
@@ -170,9 +171,10 @@ class StyleCostingService {
             ? style.StyleCosting[0]
             : null;
         
-        // SupplierId=2 için StyleCostingSupplierId'yi bul
-        const styleCostingSupplierId = styleCosting ? this.getTargetStyleCostingSupplierId(styleCosting) : null;
-        
+        // SupplierId=2 için tedarikçi bilgilerini bul
+        const supplierInfo = styleCosting ? this.getTargetSupplierInfo(styleCosting) : { id: null, name: null };
+        const styleCostingSupplierId = supplierInfo.id;
+
         // Cost Elements'i çıkar
         const costElements = styleCosting && styleCostingSupplierId 
           ? this.extractCostElements(styleCosting, styleCostingSupplierId)
@@ -240,6 +242,7 @@ class StyleCostingService {
               // Costing bilgileri
               hasCostingData: styleCostingSupplierId ? true : false,
               styleCostingSupplierId: styleCostingSupplierId,
+              supplierName: supplierInfo.name,
               
               // Cost Elements (dinamik kolonlar)
               ...costElements,
