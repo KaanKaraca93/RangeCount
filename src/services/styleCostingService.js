@@ -190,6 +190,7 @@ class StyleCostingService {
 
             const row = {
               // Style bilgileri
+              opsiyonKodu: `${style.StyleCode}${colorway.Code}`,
               styleId: style.StyleId,
               styleCode: style.StyleCode,
               numericValue1: style.NumericValue1, // PSF
