@@ -190,7 +190,7 @@ class StyleCostingService {
               styleId: style.StyleId,
               styleCode: style.StyleCode,
               numericValue1: style.NumericValue1, // PSF
-              quantity: style.Quantity, // Planlanan Adet
+              styleQuantity: style.Quantity, // Style seviyesi planlanan adet
               deliveryIdList: style.DeliveryIdList,
               remark: style.Remark,
               
