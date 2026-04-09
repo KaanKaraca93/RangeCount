@@ -21,7 +21,7 @@ class StyleCostingService {
       const params = {
         '$select': 'StyleId,StyleCode,NumericValue1,Quantity,DeliveryIdList,Remark',
         '$filter': 'SeasonId eq 10 and BrandId in (4,8) and DivisionId eq 6 and Status ne 103 and Status ne 1',
-        '$expand': 'UserDefinedField5($select=Name),Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,ColorwayStatus,ThemeId,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive,FreeFieldThree;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
+        '$expand': 'UserDefinedField5($select=Name),Season($select=Name),StyleStatus($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),Division($select=Id,Name,Code),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,ColorwayStatus,ThemeId,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive,FreeFieldThree;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
       };
       
       console.log(`📞 PLM'den style costing verileri çekiliyor...`);
@@ -203,6 +203,9 @@ class StyleCostingService {
               styleStatus: style.StyleStatus ? style.StyleStatus.Name : null,
               
               // Kategorik bilgiler
+              division: style.Division ? style.Division.Name : null,
+              divisionId: style.Division ? style.Division.Id : null,
+              divisionCode: style.Division ? style.Division.Code : null,
               marka: style.Brand ? style.Brand.Name : null,
               brandId: style.Brand ? style.Brand.Id : null,
               urunGrubu: style.SubCategory ? style.SubCategory.Name : null,
