@@ -24,6 +24,7 @@ let
          "marka", "brandId",
          "urunGrubu", "subCategoryId",
          "urunAltGrubu", "subSubCategoryId",
+         "sam",
          "marketField3", "marketField5",
          "udf5", "udf5Id",
          
@@ -78,6 +79,7 @@ let
          "marka", "brandId",
          "urunGrubu", "subCategoryId",
          "urunAltGrubu", "subSubCategoryId",
+         "sam",
          "marketField3", "marketField5",
          "udf5", "udf5Id",
          
@@ -142,6 +144,7 @@ let
         {"subCategoryId",        Int64.Type},
         {"urunAltGrubu",         type text},
         {"subSubCategoryId",     Int64.Type},
+        {"sam",                  type number},
         {"marketField3",         type text},
         {"marketField5",         type text},
         {"udf5",                 type text},

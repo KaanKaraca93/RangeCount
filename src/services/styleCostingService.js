@@ -21,7 +21,7 @@ class StyleCostingService {
       const params = {
         '$select': 'StyleId,StyleCode,NumericValue1,Quantity,DeliveryIdList,Remark',
         '$filter': 'SeasonId eq 10 and BrandId in (4,8) and DivisionId eq 6 and Status ne 103 and Status ne 1',
-        '$expand': 'UserDefinedField5($select=Name),Season($select=Name),StyleStatus($select=Name),MarketField3($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),Division($select=Id,Name,Code),StyleSupplier($select=Name),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,Quantity,ColorwayStatus,ThemeId,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive,FreeFieldThree;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
+        '$expand': 'UserDefinedField5($select=Name),Season($select=Name),StyleStatus($select=Name),MarketField3($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),Division($select=Id,Name,Code),StyleSupplier($select=Name),StyleBOO($select=Id;$expand=StyleBOLOperation($select=Id,OperationId,Sam;$filter=OperationId eq 1)),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,Quantity,ColorwayStatus,ThemeId,ColorwayUserField1,ColorwayUserField4,ColorwayUserField5,FreeFieldOne,FreeFieldFive,FreeFieldThree;$expand=theme($select=Code,Name,Description);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
       };
       
       console.log(`📞 PLM'den style costing verileri çekiliyor...`);
@@ -206,6 +206,11 @@ class StyleCostingService {
               subCategoryId: style.SubCategory ? style.SubCategory.Id : null,
               urunAltGrubu: (style.ProductSubSubCategory || style.Productsubsubcategory) ? (style.ProductSubSubCategory || style.Productsubsubcategory).Name : null,
               subSubCategoryId: (style.ProductSubSubCategory || style.Productsubsubcategory) ? (style.ProductSubSubCategory || style.Productsubsubcategory).Id : null,
+              sam: (() => {
+                const boo = style.StyleBOO && style.StyleBOO[0];
+                const op  = boo && boo.StyleBOLOperation && boo.StyleBOLOperation[0];
+                return op ? op.Sam : null;
+              })(),
               marketField3: style.MarketField3 ? style.MarketField3.Name : null,
               marketField5: style.MarketField5 ? style.MarketField5.Name : null,
               udf5: style.UserDefinedField5 ? style.UserDefinedField5.Name : null,
