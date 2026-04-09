@@ -4,6 +4,23 @@ const PLM_CONFIG = require('../config/plm.config');
 
 const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
 
+const COLORWAY_USER_FIELD1_MAP = {
+  15: 'Activewear',
+  7:  'Basics',
+  6:  'Essentials',
+  8:  'Fashion Core',
+  9:  'Fashion Newness',
+  10: 'Fashion Wow',
+  14: 'Iconic / Hero',
+  11: 'Styling Core',
+  13: 'Twist Fashion',
+  12: 'Twist Signature',
+  5:  'ÇOK FARKLI',
+  2:  'FARKLI',
+  1:  'IMAGE',
+  4:  'NORMAL',
+};
+
 /**
  * Style Costing Service
  * Her colorway için maliyet bilgilerini getir (SupplierId=2)
@@ -223,7 +240,7 @@ class StyleCostingService {
               colorwayStatus: colorway.ColorwayStatus,
               minimumQuantity: colorway.MinimumQuantity,
               quantity: colorway.Quantity,
-              colorwayUserField1: colorway.ColorwayUserField1, // Fashion Pyramid
+              colorwayUserField1: COLORWAY_USER_FIELD1_MAP[colorway.ColorwayUserField1] || colorway.ColorwayUserField1, // Fashion Pyramid
               colorwayUserField4: colorway.ColorwayUserField4, // Yeni alan
               colorwayUserField5: colorway.ColorwayUserField5, // Yeni alan
               freeFieldOne: colorway.FreeFieldOne, // Cluster
