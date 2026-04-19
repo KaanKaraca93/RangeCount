@@ -273,13 +273,23 @@ class PLMRangeV7Service {
           const dropdownInfo = dropdownMap[dropDownValue];
           const rangeDetayi = dropdownInfo ? dropdownInfo.name : `ID_${dropDownValue}`;
 
+          // Etiket lookup'ları faz'a göre filtrelenir; aynı ExtFldId farklı fazda
+          // farklı Range/RangeTag etiketine sahip olabildiği için faz uyuşmazsa
+          // sürplus colorway'ler yanlış faz'ın etiketlerini alıyordu.
           const samplePlan = placeholders.find(p =>
+            p.brandId === brandId && p.subSubCategoryId === subSubCategoryId && p.faz === faz
+          ) || placeholders.find(p =>
             p.brandId === brandId && p.subSubCategoryId === subSubCategoryId
           );
           const marka = samplePlan ? samplePlan.marka : (brandId === 4 ? 'Ipekyol' : 'Twist');
           const urunGrubu = samplePlan ? samplePlan.urunGrubu : 'Unknown';
 
           const sampleRangeInfo = placeholders.find(p =>
+            p.extFldId === extFldId &&
+            p.brandId === brandId &&
+            p.subSubCategoryId === subSubCategoryId &&
+            p.faz === faz
+          ) || placeholders.find(p =>
             p.extFldId === extFldId && p.brandId === brandId && p.subSubCategoryId === subSubCategoryId
           );
           const range = sampleRangeInfo ? sampleRangeInfo.range : 'Unknown';
