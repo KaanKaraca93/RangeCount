@@ -25,7 +25,9 @@ class PlmThemeCategoryService {
         seasonId:      Number(r['SeasonId'])        || 0,
         faz:           r['FreeFieldThree']  || '',
         temaAdi:       r['Tema Adı']        || '',
-        themeId:       Number(r['ThemeId'])         || 0,
+        // ThemeId boş/null olabilir (tema henüz tam açılmamış). Bu satırlar
+        // eşleştirmeye girmemeli; bu yüzden 0'a düşürmek yerine null bırakıyoruz.
+        themeId:       this._parseThemeId(r['ThemeId']),
         kategori:      r['Kategori']        || '',
         subCategoryId: Number(r['SubCategoryId'])   || 0,
         pOpt:          Number(r['Opt Say'])          || 0
@@ -46,6 +48,11 @@ class PlmThemeCategoryService {
 
     const uniqueSeasons = [...new Set(this.planData.map(r => r.seasonId))].filter(Boolean);
     const uniqueBrands  = [...new Set(this.planData.map(r => r.brandId))].filter(Boolean);
+
+    if (uniqueSeasons.length === 0 || uniqueBrands.length === 0) {
+      console.warn('⚠️ Geçerli SeasonId/BrandId bulunamadı — PLM sorgusu atlanıyor, boş sonuç dönülüyor.');
+      return [];
+    }
 
     const seasonFilter = uniqueSeasons.length === 1
       ? `SeasonId eq ${uniqueSeasons[0]}`
@@ -87,6 +94,9 @@ class PlmThemeCategoryService {
     // planKey → { tOpt, gOpt, gerceklesenler[] }
     const actuals = {};
     this.planData.forEach(p => {
+      // ThemeId boşsa hesaplama beklenmiyor; anahtar üretme (eşleşme aramaz,
+      // çıktıda gOpt=0 olarak görünür).
+      if (!p.themeId) return;
       const key = this._makeKey(p.themeId, p.subCategoryId, p.seasonId, p.faz);
       actuals[key] = { tOpt: 0, gOpt: 0, gerceklesenler: [] };
     });
@@ -180,6 +190,12 @@ class PlmThemeCategoryService {
       fark: t.pOpt - t.gOpt,
       oran: t.pOpt > 0 ? `${Math.round((t.gOpt / t.pOpt) * 100)}%` : '0%'
     }));
+  }
+
+  _parseThemeId(value) {
+    if (value === undefined || value === null || value === '') return null;
+    const n = Number(value);
+    return Number.isFinite(n) && n > 0 ? n : null;
   }
 
   _makeKey(themeId, subCategoryId, seasonId, faz) {
