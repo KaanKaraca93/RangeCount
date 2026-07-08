@@ -4,6 +4,11 @@ const PLM_CONFIG = require('../config/plm.config');
 
 const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
 
+// Tema meta verisi (Alt_Sezon vb.) IDM'den okunur ve nadiren değişir.
+// PID bazında cache'lenir; aynı tema birden çok colorway tarafından paylaşılır.
+const THEME_ATTR_TTL_MS = 30 * 60 * 1000; // 30 dakika
+const themeAttrCache = new Map(); // themePid -> { altSezon, attributes, loadedAt }
+
 const COLORWAY_USER_FIELD1_MAP = {
   15: 'Activewear',
   7:  'Basics',
@@ -65,6 +70,65 @@ class StyleCostingService {
       }
       throw error;
     }
+  }
+
+  /**
+   * IDM'den bir temanın tüm attribute'larını çek (Alt_Sezon dahil).
+   * Tema PID'si colorway.theme.Description alanında tutuluyor.
+   * @param {string} themePid IDM item id (theme.Description)
+   * @returns {Promise<{altSezon: (string|null), attributes: Object}>}
+   */
+  async fetchThemeAttributes(themePid) {
+    if (!themePid) return { altSezon: null, attributes: {} };
+
+    const cached = themeAttrCache.get(themePid);
+    if (cached && (Date.now() - cached.loadedAt) < THEME_ATTR_TTL_MS) {
+      return { altSezon: cached.altSezon, attributes: cached.attributes };
+    }
+
+    try {
+      const authHeader = await tokenService.getAuthorizationHeader();
+      const url = `${PLM_CONFIG.ionApiUrl}/${PLM_CONFIG.tenantId}/IDM/api/items/${encodeURIComponent(themePid)}`;
+
+      const response = await axios.get(url, {
+        headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
+      });
+
+      const attrArray = response?.data?.item?.attrs?.attr || [];
+      const attributes = {};
+      attrArray.forEach(a => {
+        if (a && a.name != null) attributes[a.name] = a.value != null ? a.value : null;
+      });
+      const altSezon = attributes['Alt_Sezon'] != null ? attributes['Alt_Sezon'] : null;
+
+      themeAttrCache.set(themePid, { altSezon, attributes, loadedAt: Date.now() });
+      return { altSezon, attributes };
+    } catch (error) {
+      // Hata olursa hesap durmasın; boş tema meta verisiyle devam et.
+      console.error(`❌ IDM tema özellikleri okunamadı (${themePid}): ${error.message}`);
+      return { altSezon: null, attributes: {} };
+    }
+  }
+
+  /**
+   * Verilen benzersiz tema PID'leri için IDM attribute'larını sınırlı
+   * eşzamanlılıkla (concurrency) paralel çeker.
+   * @returns {Promise<Object>} pid -> { altSezon, attributes }
+   */
+  async loadThemeAttributes(pids, concurrency = 5) {
+    const map = {};
+    let cursor = 0;
+
+    const worker = async () => {
+      while (cursor < pids.length) {
+        const pid = pids[cursor++];
+        map[pid] = await this.fetchThemeAttributes(pid);
+      }
+    };
+
+    const workerCount = Math.min(concurrency, pids.length) || 0;
+    await Promise.all(Array.from({ length: workerCount }, worker));
+    return map;
   }
 
   /**
@@ -172,6 +236,21 @@ class StyleCostingService {
       console.log('🔧 Style costing hesaplaması başlatılıyor...');
       
       const styles = await this.fetchStyleCostingData();
+
+      // Benzersiz tema PID'lerini topla (colorway.theme.Description = IDM PID)
+      // ve IDM'den Alt_Sezon + tüm tema özelliklerini önceden çek.
+      const themePids = new Set();
+      styles.forEach(style => {
+        (style.StyleColorways || []).forEach(cw => {
+          if (!cw || EXCLUDED_THEME_IDS.has(cw.ThemeId)) return;
+          const theme = cw.theme || cw.Theme;
+          const pid = theme ? theme.Description : null;
+          if (pid) themePids.add(pid);
+        });
+      });
+      console.log(`🎨 ${themePids.size} benzersiz tema için IDM Alt_Sezon verisi çekiliyor...`);
+      const themeAttrMap = await this.loadThemeAttributes([...themePids]);
+
       const results = [];
 
       styles.forEach(style => {
@@ -200,6 +279,13 @@ class StyleCostingService {
           style.StyleColorways.forEach(colorway => {
             // 🚫 İptal temaları hariç tut
             if (EXCLUDED_THEME_IDS.has(colorway.ThemeId)) return;
+
+            // Tema PID (theme.Description) → IDM'den çekilen Alt_Sezon + tüm özellikler
+            const themeObj = colorway.theme || colorway.Theme;
+            const themePid = themeObj ? themeObj.Description : null;
+            const themeAttr = (themePid && themeAttrMap[themePid])
+              ? themeAttrMap[themePid]
+              : { altSezon: null, attributes: {} };
 
             const row = {
               // Style bilgileri
@@ -255,6 +341,10 @@ class StyleCostingService {
               themeCode: (colorway.theme || colorway.Theme) ? (colorway.theme || colorway.Theme).Code : null,
               themeName: (colorway.theme || colorway.Theme) ? (colorway.theme || colorway.Theme).Name : null,
               themeDescription: (colorway.theme || colorway.Theme) ? (colorway.theme || colorway.Theme).Description : null,
+
+              // Tema meta verisi (IDM üzerinden — colorway seviyesinde)
+              altSezon: themeAttr.altSezon,
+              themeAttributes: themeAttr.attributes,
               
               // Ana tedarikçi (Style seviyesinden)
               supplierName: style.StyleSupplier ? style.StyleSupplier.Name : null,
