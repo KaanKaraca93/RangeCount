@@ -1,8 +1,7 @@
-const XLSX = require('xlsx');
 const axios = require('axios');
-const path = require('path');
 const tokenService = require('./tokenService');
 const PLM_CONFIG = require('../config/plm.config');
+const COSTINGDB_CONFIG = require('../config/costingDb.config');
 
 const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
 
@@ -27,25 +26,34 @@ const normAltSezon = (v) => (v == null || v === '') ? null : String(v).trim().to
  *   - Alt_Sezon PLM'de doğrudan yok; colorway temasının PID'si
  *     (StyleColorways.Theme.Description) → IDM /IDM/api/items/{pid} →
  *     attrs.attr[Alt_Sezon].value üzerinden çözülüyor.
- *   - Excel: RangeSayacv6_2.xlsx (Alt_Sezon sütunu ekli)
+ *   - Plan kaynağı: IpekyolCostingDB API'si
+ *     (GET /api/option-plan-parametreleri?format=plan) — eski RangeSayacv6_2.xlsx
+ *     yerine. Dönen JSON, Excel'in kolon adlarıyla birebir aynıdır.
  *   - Output: V6 ile aynı format, "faz" yerine "altSezon" alanı.
  */
 class RangeCountSourceV6_2Service {
   constructor() {
     this.placeholders = [];
-    this.loadPlanData();
   }
 
-  loadPlanData() {
+  /**
+   * Plan verisini (placeholder listesi) CostingDB API'sinden çeker.
+   * Dönen satırlar RangeSayacv6_2.xlsx kolon adlarıyla birebir aynıdır.
+   */
+  async loadPlanData() {
+    const url = `${COSTINGDB_CONFIG.baseUrl}${COSTINGDB_CONFIG.endpoints.optionPlan}`;
     try {
-      const workbook = XLSX.readFile(path.join(__dirname, '../../RangeSayacv6_2.xlsx'));
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      this.placeholders = XLSX.utils.sheet_to_json(worksheet);
-      console.log(`✅ V6.2 Placeholder planı yüklendi: ${this.placeholders.length} satır`);
+      const response = await axios.get(url, {
+        headers: { 'Accept': 'application/json' },
+        timeout: COSTINGDB_CONFIG.timeoutMs
+      });
+      const rows = Array.isArray(response.data) ? response.data : [];
+      this.placeholders = rows;
+      console.log(`✅ V6.2 Placeholder planı CostingDB API'sinden yüklendi: ${rows.length} satır`);
+      return rows;
     } catch (error) {
-      console.error('❌ RangeSayacv6_2.xlsx yüklenirken hata:', error.message);
-      this.placeholders = [];
+      console.error(`❌ V6.2 plan verisi CostingDB API'sinden alınamadı (${url}): ${error.message}`);
+      throw new Error(`Option Plan verisi CostingDB API'sinden alınamadı: ${error.message}`);
     }
   }
 
@@ -207,6 +215,9 @@ class RangeCountSourceV6_2Service {
 
   async matchColorwaysToPlaceholders() {
     try {
+      // Plan verisi (placeholder'lar) CostingDB API'sinden okunur.
+      await this.loadPlanData();
+
       const plmStyles = await this.fetchStylesFromPLM();
 
       // Tema PID'lerinden Alt_Sezon'u çöz ve colorway'lere iliştir.

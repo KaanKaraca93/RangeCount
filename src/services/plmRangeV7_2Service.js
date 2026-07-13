@@ -1,7 +1,6 @@
-const XLSX = require('xlsx');
 const axios = require('axios');
-const path = require('path');
 const PLM_CONFIG = require('../config/plm.config');
+const COSTINGDB_CONFIG = require('../config/costingDb.config');
 const tokenService = require('./tokenService');
 
 const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
@@ -38,24 +37,32 @@ const normGroup = (v) => {
  *   2. ProductSubSubCategory.Id yerine SubCategory.Id ile eşleştirme.
  *   3. LifeStyleGroup kırılımı (ColorwayUserDefinedField4.Id → Mono/Business/Tema/Diğer).
  *      Hem matching key'e hem özet kırılımına dahildir.
- *   - Excel: RangeSayacv7_2.xlsx
+ *   - Plan kaynağı: IpekyolCostingDB API'si
+ *     (GET /api/range-plan-parametreleri?format=plan) — eski Rangesayacv7_2.xlsx
+ *     yerine. Dönen JSON, Excel'in kolon adlarıyla birebir aynıdır.
  */
 class PLMRangeV7_2Service {
   constructor() {
     this.dropdownCache = null;
   }
 
-  readPlanData() {
+  /**
+   * Plan verisini CostingDB API'sinden çeker.
+   * Dönen satırlar Rangesayacv7_2.xlsx kolon adlarıyla birebir aynıdır.
+   */
+  async readPlanData() {
+    const url = `${COSTINGDB_CONFIG.baseUrl}${COSTINGDB_CONFIG.endpoints.rangePlan}`;
     try {
-      const workbook = XLSX.readFile(path.join(__dirname, '../../Rangesayacv7_2.xlsx'));
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const data = XLSX.utils.sheet_to_json(worksheet);
-      console.log(`📊 V7.2 Excel'den ${data.length} satır plan verisi okundu`);
+      const response = await axios.get(url, {
+        headers: { 'Accept': 'application/json' },
+        timeout: COSTINGDB_CONFIG.timeoutMs
+      });
+      const data = Array.isArray(response.data) ? response.data : [];
+      console.log(`📊 V7.2 CostingDB API'sinden ${data.length} satır plan verisi okundu`);
       return data;
     } catch (error) {
-      console.error('❌ Rangesayacv7_2.xlsx okuma hatası:', error.message);
-      throw error;
+      console.error(`❌ V7.2 plan verisi CostingDB API'sinden alınamadı (${url}): ${error.message}`);
+      throw new Error(`Range Plan verisi CostingDB API'sinden alınamadı: ${error.message}`);
     }
   }
 
@@ -205,7 +212,7 @@ class PLMRangeV7_2Service {
     try {
       console.log('🔄 V7.2 Range verileri hesaplanıyor...');
 
-      const planData = this.readPlanData();
+      const planData = await this.readPlanData();
 
       const extFldIds = [...new Set(planData.map(p => p.ExtFldId).filter(Boolean))];
       console.log(`🔍 ${extFldIds.length} unique ExtFldId tespit edildi`);
