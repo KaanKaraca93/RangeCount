@@ -47,14 +47,14 @@ class PLMRangeV7_2Service {
 
   readPlanData() {
     try {
-      const workbook = XLSX.readFile(path.join(__dirname, '../../RangeSayacv7_2.xlsx'));
+      const workbook = XLSX.readFile(path.join(__dirname, '../../Rangesayacv7_2.xlsx'));
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
       const data = XLSX.utils.sheet_to_json(worksheet);
       console.log(`📊 V7.2 Excel'den ${data.length} satır plan verisi okundu`);
       return data;
     } catch (error) {
-      console.error('❌ RangeSayacv7_2.xlsx okuma hatası:', error.message);
+      console.error('❌ Rangesayacv7_2.xlsx okuma hatası:', error.message);
       throw error;
     }
   }
