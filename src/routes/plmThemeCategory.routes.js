@@ -10,18 +10,20 @@ const plmThemeCategoryService = require('../services/plmThemeCategoryService');
  *   ?subCategoryId=21     → belirli kategori filtresi
  *   ?seasonId=10          → sezon filtresi
  *   ?faz=SEMI+PLAN        → faz filtresi
+ *   ?altSezon=SS1         → alt sezon filtresi
  *   ?onlyWithPlan=true    → sadece pOpt > 0 olanlar
  */
 router.get('/', async (req, res) => {
   try {
-    const { themeId, subCategoryId, seasonId, faz, onlyWithPlan } = req.query;
+    const { themeId, subCategoryId, seasonId, faz, altSezon, onlyWithPlan } = req.query;
 
     let data = await plmThemeCategoryService.calculateProgress();
 
     if (themeId)       data = data.filter(r => r.temaId        === Number(themeId));
     if (subCategoryId) data = data.filter(r => r.subCategoryId === Number(subCategoryId));
     if (seasonId)      data = data.filter(r => r.seasonId      === Number(seasonId));
-    if (faz)           data = data.filter(r => r.faz.toUpperCase() === faz.toUpperCase());
+    if (faz)           data = data.filter(r => (r.faz || '').toUpperCase() === faz.toUpperCase());
+    if (altSezon)      data = data.filter(r => (r.altSezon || '').toUpperCase() === altSezon.toUpperCase());
     if (onlyWithPlan === 'true') data = data.filter(r => r.pOpt > 0);
 
     res.json({ count: data.length, data });
@@ -37,12 +39,13 @@ router.get('/', async (req, res) => {
  */
 router.get('/summary', async (req, res) => {
   try {
-    const { seasonId, faz } = req.query;
+    const { seasonId, faz, altSezon } = req.query;
 
     let data = await plmThemeCategoryService.calculateProgress();
 
     if (seasonId) data = data.filter(r => r.seasonId === Number(seasonId));
-    if (faz)      data = data.filter(r => r.faz.toUpperCase() === faz.toUpperCase());
+    if (faz)      data = data.filter(r => (r.faz || '').toUpperCase() === faz.toUpperCase());
+    if (altSezon) data = data.filter(r => (r.altSezon || '').toUpperCase() === altSezon.toUpperCase());
 
     const summary = plmThemeCategoryService.calculateSummary(data);
 
@@ -71,14 +74,15 @@ router.get('/summary', async (req, res) => {
  */
 router.get('/actuals', async (req, res) => {
   try {
-    const { themeId, subCategoryId, seasonId, faz } = req.query;
+    const { themeId, subCategoryId, seasonId, faz, altSezon } = req.query;
 
     let data = await plmThemeCategoryService.calculateProgress();
 
     if (themeId)       data = data.filter(r => r.temaId        === Number(themeId));
     if (subCategoryId) data = data.filter(r => r.subCategoryId === Number(subCategoryId));
     if (seasonId)      data = data.filter(r => r.seasonId      === Number(seasonId));
-    if (faz)           data = data.filter(r => r.faz.toUpperCase() === faz.toUpperCase());
+    if (faz)           data = data.filter(r => (r.faz || '').toUpperCase() === faz.toUpperCase());
+    if (altSezon)      data = data.filter(r => (r.altSezon || '').toUpperCase() === altSezon.toUpperCase());
 
     const actuals = [];
     data.forEach(row => {
@@ -89,6 +93,7 @@ router.get('/actuals', async (req, res) => {
           kategori:      row.kategori,
           subCategoryId: row.subCategoryId,
           faz:           row.faz,
+          altSezon:      row.altSezon,
           ...cw
         });
       });

@@ -4,9 +4,16 @@ const path = require('path');
 const tokenService = require('./tokenService');
 const PLM_CONFIG = require('../config/plm.config');
 
-const EXCEL_FILE = 'RangeSayacv3_yeni_taslak.xlsx';
+const EXCEL_FILE = 'RangeSayacv3_yeni_taslakv2.xlsx';
 
 const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
+
+// Tema meta verisi (Alt_Sezon) IDM'den okunur ve nadiren değişir → PID bazlı cache.
+const THEME_ALT_SEZON_TTL_MS = 30 * 60 * 1000; // 30 dakika
+const themeAltSezonCache = new Map(); // themePid -> { value, loadedAt }
+
+// Anahtar bileşeni için normalize edici (plan ve colorway aynı üretmeli)
+const normAltSezon = (v) => (v === undefined || v === null || v === '') ? '' : String(v).trim().toUpperCase();
 
 class PlmThemeCategoryService {
   constructor() {
@@ -24,6 +31,10 @@ class PlmThemeCategoryService {
         brandId:       Number(r['BrandId'])        || 0,
         seasonId:      Number(r['SeasonId'])        || 0,
         faz:           r['FreeFieldThree']  || '',
+        // Sezon 11 itibarıyla eşleştirme FreeFieldThree yerine Alt_Sezon ile yapılıyor.
+        // Alt_Sezon PLM'de doğrudan yok; colorway temasının PID'sinden (Theme.Description)
+        // IDM /IDM/api/items/{pid} → attrs.attr[Alt_Sezon] üzerinden çözülür.
+        altSezon:      r['Alt_Sezon']       || '',
         temaAdi:       r['Tema Adı']        || '',
         // ThemeId boş/null olabilir (tema henüz tam açılmamış). Bu satırlar
         // eşleştirmeye girmemeli; bu yüzden 0'a düşürmek yerine null bırakıyoruz.
@@ -37,6 +48,73 @@ class PlmThemeCategoryService {
       console.error('❌ Excel yüklenirken hata:', err.message);
       this.planData = [];
     }
+  }
+
+  // ── IDM Alt_Sezon çözümü (v6.2/v7.2 ile aynı mantık) ──────────────────
+  async fetchAltSezon(themePid) {
+    if (!themePid) return null;
+
+    const cached = themeAltSezonCache.get(themePid);
+    if (cached && (Date.now() - cached.loadedAt) < THEME_ALT_SEZON_TTL_MS) {
+      return cached.value;
+    }
+
+    try {
+      const authHeader = await tokenService.getAuthorizationHeader();
+      const url = `${PLM_CONFIG.ionApiUrl}/${PLM_CONFIG.tenantId}/IDM/api/items/${encodeURIComponent(themePid)}`;
+      const response = await axios.get(url, {
+        headers: { 'Authorization': authHeader, 'Accept': 'application/json' }
+      });
+
+      const attrs = response?.data?.item?.attrs?.attr || [];
+      const found = attrs.find(a => a && (a.name === 'Alt_Sezon' || a.qual === 'Alt_Sezon'));
+      const value = found && found.value != null ? String(found.value) : null;
+
+      themeAltSezonCache.set(themePid, { value, loadedAt: Date.now() });
+      return value;
+    } catch (error) {
+      console.error(`❌ IDM Alt_Sezon okunamadı (${themePid}): ${error.message}`);
+      return null;
+    }
+  }
+
+  async loadAltSezonMap(pids, concurrency = 5) {
+    const map = {};
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < pids.length) {
+        const pid = pids[cursor++];
+        map[pid] = await this.fetchAltSezon(pid);
+      }
+    };
+    const workerCount = Math.min(concurrency, pids.length) || 0;
+    await Promise.all(Array.from({ length: workerCount }, worker));
+    return map;
+  }
+
+  // Colorway'lere altSezon bilgisini (tema PID → IDM) iliştirir.
+  async annotateAltSezon(styles) {
+    const pids = new Set();
+    styles.forEach(style => {
+      (style.StyleColorways || []).forEach(cw => {
+        if (!cw) return;
+        const theme = cw.Theme || cw.theme;
+        const pid = theme ? theme.Description : null;
+        if (pid) pids.add(pid);
+      });
+    });
+
+    console.log(`🎨 Tema-Kategori — ${pids.size} benzersiz tema için IDM Alt_Sezon çekiliyor...`);
+    const altSezonMap = await this.loadAltSezonMap([...pids]);
+
+    styles.forEach(style => {
+      (style.StyleColorways || []).forEach(cw => {
+        if (!cw) return;
+        const theme = cw.Theme || cw.theme;
+        const pid = theme ? theme.Description : null;
+        cw.altSezon = pid ? (altSezonMap[pid] || null) : null;
+      });
+    });
   }
 
   /**
@@ -69,7 +147,8 @@ class PlmThemeCategoryService {
       '$expand': [
         'SubCategory($select=Id,Name)',
         'Season($select=Id,Name,Code)',
-        'StyleColorways($select=StyleColorwayId,Code,Name,ThemeId,FreeFieldOne,FreeFieldThree,ColorwayStatus;$filter=ColorwayStatus ne 4)'
+        // Theme($select=Id,Description) → Description = IDM PID (Alt_Sezon için)
+        'StyleColorways($select=StyleColorwayId,Code,Name,ThemeId,FreeFieldOne,FreeFieldThree,ColorwayStatus;$expand=Theme($select=Id,Description);$filter=ColorwayStatus ne 4)'
       ].join(',')
     };
 
@@ -91,13 +170,16 @@ class PlmThemeCategoryService {
   async calculateProgress() {
     const plmStyles = await this.fetchStylesFromPLM();
 
+    // Colorway'lere tema PID'sinden Alt_Sezon'u çöz ve iliştir (eşleştirme bununla yapılır).
+    await this.annotateAltSezon(plmStyles);
+
     // planKey → { tOpt, gOpt, gerceklesenler[] }
     const actuals = {};
     this.planData.forEach(p => {
       // ThemeId boşsa hesaplama beklenmiyor; anahtar üretme (eşleşme aramaz,
       // çıktıda gOpt=0 olarak görünür).
       if (!p.themeId) return;
-      const key = this._makeKey(p.themeId, p.subCategoryId, p.seasonId, p.faz);
+      const key = this._makeKey(p.themeId, p.subCategoryId, p.seasonId, p.altSezon);
       actuals[key] = { tOpt: 0, gOpt: 0, gerceklesenler: [] };
     });
 
@@ -114,7 +196,7 @@ class PlmThemeCategoryService {
           cw.ThemeId,
           style.SubCategoryId,
           style.SeasonId,
-          cw.FreeFieldThree
+          cw.altSezon
         );
 
         if (!actuals[key]) continue; // planımızda yoksa atla
@@ -130,14 +212,15 @@ class PlmThemeCategoryService {
             colorCode:      cw.Code,
             colorName:      cw.Name,
             seasonId:       style.SeasonId,
-            faz:            cw.FreeFieldThree
+            faz:            cw.FreeFieldThree,
+            altSezon:       cw.altSezon || null
           });
         }
       }
     }
 
     const results = this.planData.map(p => {
-      const key  = this._makeKey(p.themeId, p.subCategoryId, p.seasonId, p.faz);
+      const key  = this._makeKey(p.themeId, p.subCategoryId, p.seasonId, p.altSezon);
       const act  = actuals[key] || { tOpt: 0, gOpt: 0, gerceklesenler: [] };
       const fark = p.pOpt - act.gOpt;
       const oran = p.pOpt > 0 ? Math.round((act.gOpt / p.pOpt) * 100) : 0;
@@ -147,6 +230,7 @@ class PlmThemeCategoryService {
         brandId:       p.brandId,
         seasonId:      p.seasonId,
         faz:           p.faz,
+        altSezon:      p.altSezon,
         temaAdi:       p.temaAdi,
         temaId:        p.themeId,
         kategori:      p.kategori,
@@ -169,7 +253,7 @@ class PlmThemeCategoryService {
   calculateSummary(data) {
     const byTheme = {};
     data.forEach(row => {
-      const k = `${row.temaId}_${row.seasonId}_${row.faz}`;
+      const k = `${row.temaId}_${row.seasonId}_${normAltSezon(row.altSezon)}`;
       if (!byTheme[k]) {
         byTheme[k] = {
           temaAdi: row.temaAdi,
@@ -177,6 +261,7 @@ class PlmThemeCategoryService {
           marka:   row.marka,
           seasonId: row.seasonId,
           faz:     row.faz,
+          altSezon: row.altSezon,
           pOpt: 0, tOpt: 0, gOpt: 0
         };
       }
@@ -198,8 +283,8 @@ class PlmThemeCategoryService {
     return Number.isFinite(n) && n > 0 ? n : null;
   }
 
-  _makeKey(themeId, subCategoryId, seasonId, faz) {
-    return `${themeId}_${subCategoryId}_${seasonId}_${(faz || '').trim().toUpperCase()}`;
+  _makeKey(themeId, subCategoryId, seasonId, altSezon) {
+    return `${themeId}_${subCategoryId}_${seasonId}_${normAltSezon(altSezon)}`;
   }
 }
 
