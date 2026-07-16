@@ -2,6 +2,7 @@ const axios = require('axios');
 const tokenService = require('./tokenService');
 const PLM_CONFIG = require('../config/plm.config');
 const COSTINGDB_CONFIG = require('../config/costingDb.config');
+const plmLookupService = require('./plmLookupService');
 
 const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
 
@@ -223,6 +224,10 @@ class RangeCountSourceV6_2Service {
       // Tema PID'lerinden Alt_Sezon'u çöz ve colorway'lere iliştir.
       await this.annotateAltSezon(plmStyles);
 
+      // Görünen isimleri ID'den (tr-tr) çözmek için PLM lookup'larını yükle.
+      // ID tek gerçek; isim her satırda buradan türetilir (PLM diline bağımsız, tutarlı).
+      const lk = await plmLookupService.load();
+
       const results = [];
       const matchedColorwayIds = new Set();
 
@@ -262,20 +267,20 @@ class RangeCountSourceV6_2Service {
         }
 
         results.push({
-          marka: placeholder.MARKA,
+          marka: plmLookupService.name(lk, 'brand', placeholder.BrandId, placeholder.MARKA),
           brandId: placeholder.BrandId,
           opsiyonKodu: placeholder['Opsiyon Kodu'],
-          urunGrubu: placeholder['ÜRÜN GRUBU'],
+          urunGrubu: plmLookupService.name(lk, 'subCategory', placeholder.SubCategoryId, placeholder['ÜRÜN GRUBU']),
           subCategoryId: placeholder.SubCategoryId,
-          urunAltGrup: placeholder['Ürün Alt Grup'],
+          urunAltGrup: plmLookupService.name(lk, 'subSubCategory', placeholder.SubSubCategoryId, placeholder['Ürün Alt Grup']),
           subSubCategoryId: placeholder.SubSubCategoryId,
-          fashionPyramid: placeholder['Fashion Pyramid'],
+          fashionPyramid: plmLookupService.name(lk, 'fashionPyramid', placeholder.CUD1, placeholder['Fashion Pyramid']),
           fashionPyramidId: placeholder.CUD1,
-          lifeStyleGrup: placeholder['Life Style Grup'],
+          lifeStyleGrup: plmLookupService.name(lk, 'lifeStyleGrup', placeholder.CUD4, placeholder['Life Style Grup']),
           lifeStyleGrupId: placeholder.CUD4,
-          ft: placeholder.FT,
+          ft: plmLookupService.name(lk, 'koleksiyonTipi', placeholder.CUD5, placeholder.FT),
           ftId: placeholder.CUD5,
-          segment: placeholder.Segment,
+          segment: plmLookupService.name(lk, 'segment', placeholder.UDF5Id, placeholder.Segment),
           segmentId: placeholder.UDF5Id,
           // V6.2 ekleri
           seasonId: placeholder.SeasonId,
@@ -318,20 +323,20 @@ class RangeCountSourceV6_2Service {
             : null;
 
           results.push({
-            marka: style.Brand?.Name || null,
+            marka: plmLookupService.name(lk, 'brand', style.Brand?.Id, style.Brand?.Name || null),
             brandId: style.Brand?.Id || null,
             opsiyonKodu: null,
-            urunGrubu: style.SubCategory?.Name || null,
+            urunGrubu: plmLookupService.name(lk, 'subCategory', style.SubCategory?.Id, style.SubCategory?.Name || null),
             subCategoryId: style.SubCategory?.Id || null,
-            urunAltGrup: style.ProductSubSubCategory?.Name || null,
+            urunAltGrup: plmLookupService.name(lk, 'subSubCategory', style.ProductSubSubCategory?.Id, style.ProductSubSubCategory?.Name || null),
             subSubCategoryId: style.ProductSubSubCategory?.Id || null,
-            fashionPyramid: fashionPyramidName,
+            fashionPyramid: plmLookupService.name(lk, 'fashionPyramid', colorway.ColorwayUserField1, fashionPyramidName),
             fashionPyramidId: colorway.ColorwayUserField1 ?? null,
-            lifeStyleGrup: colorway.ColorwayUserDefinedField4?.Name || null,
+            lifeStyleGrup: plmLookupService.name(lk, 'lifeStyleGrup', colorway.ColorwayUserDefinedField4?.Id, colorway.ColorwayUserDefinedField4?.Name || null),
             lifeStyleGrupId: colorway.ColorwayUserDefinedField4?.Id || null,
-            ft: colorway.ColorwayUserDefinedField5?.Name || null,
+            ft: plmLookupService.name(lk, 'koleksiyonTipi', colorway.ColorwayUserDefinedField5?.Id, colorway.ColorwayUserDefinedField5?.Name || null),
             ftId: colorway.ColorwayUserDefinedField5?.Id || null,
-            segment: style.UserDefinedField5?.Name || null,
+            segment: plmLookupService.name(lk, 'segment', style.UserDefinedField5?.Id, style.UserDefinedField5?.Name || null),
             segmentId: style.UserDefinedField5?.Id || null,
             // V6.2 ekleri
             seasonId: style.SeasonId || null,

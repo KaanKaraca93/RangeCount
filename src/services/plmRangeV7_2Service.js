@@ -2,6 +2,7 @@ const axios = require('axios');
 const PLM_CONFIG = require('../config/plm.config');
 const COSTINGDB_CONFIG = require('../config/costingDb.config');
 const tokenService = require('./tokenService');
+const plmLookupService = require('./plmLookupService');
 
 const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
 
@@ -221,6 +222,9 @@ class PLMRangeV7_2Service {
       await this.annotateAltSezon(styles);
       const dropdownMap = await this.fetchDropdownData(extFldIds);
 
+      // Marka/Ürün Grubu isimlerini ID'den (tr-tr) çöz — PLM diline bağımsız, tutarlı.
+      const lk = await plmLookupService.load();
+
       // Her plan satırını Option Say kadar çoğalt → placeholder listesi
       const placeholders = [];
       let placeholderCounter = 1;
@@ -322,9 +326,9 @@ class PLMRangeV7_2Service {
 
         const base = {
           placeholderId: placeholder.placeholderId,
-          marka: placeholder.marka,
+          marka: plmLookupService.name(lk, 'brand', placeholder.brandId, placeholder.marka),
           brandId: placeholder.brandId,
-          urunGrubu: placeholder.urunGrubu,
+          urunGrubu: plmLookupService.name(lk, 'subCategory', placeholder.subCategoryId, placeholder.urunGrubu),
           subCategoryId: placeholder.subCategoryId,
           rangeTag: placeholder.rangeTag,
           range: placeholder.range,
@@ -390,8 +394,8 @@ class PLMRangeV7_2Service {
         ) || placeholders.find(p =>
           p.brandId === brandId && p.subCategoryId === subCategoryId
         );
-        const marka = samplePlan ? samplePlan.marka : (brandId === 4 ? 'Ipekyol' : 'Twist');
-        const urunGrubu = samplePlan ? samplePlan.urunGrubu : 'Unknown';
+        const marka = plmLookupService.name(lk, 'brand', brandId, samplePlan ? samplePlan.marka : (brandId === 4 ? 'Ipekyol' : 'Twist'));
+        const urunGrubu = plmLookupService.name(lk, 'subCategory', subCategoryId, samplePlan ? samplePlan.urunGrubu : 'Unknown');
 
         const sampleRangeInfo = placeholders.find(p =>
           p.extFldId === extFldId && p.brandId === brandId &&
