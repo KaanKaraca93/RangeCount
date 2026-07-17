@@ -28,7 +28,10 @@ const GLREF_IDS = {
   fashionPyramid: 224,// Fashion Pyramid / CUD1
   lifeStyleGrup: 227, // Life Style Grup / CUD4
   koleksiyonTipi: 228,// FT / CUD5
-  segment: 232        // Segment / UDF5Id
+  segment: 232,       // Segment / UDF5Id
+  sezon: 58,          // Season / SeasonId (style-costing)
+  division: 90,       // Division / DivisionId (style-costing)
+  status: 5           // StyleStatus / Status (style-costing)
 };
 
 const LOOKUP_TTL_MS = 30 * 60 * 1000; // 30 dakika

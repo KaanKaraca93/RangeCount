@@ -1,6 +1,7 @@
 const axios = require('axios');
 const tokenService = require('./tokenService');
 const PLM_CONFIG = require('../config/plm.config');
+const plmLookupService = require('./plmLookupService');
 
 const EXCLUDED_THEME_IDS = new Set([1172, 1240, 1239, 1169, 1168, 1167, 1166]);
 
@@ -41,9 +42,9 @@ class StyleCostingService {
       
       const url = `${PLM_CONFIG.ionApiUrl}/${PLM_CONFIG.tenantId}/FASHIONPLM/odata2/api/odata2/STYLE`;
       const params = {
-        '$select': 'StyleId,StyleCode,NumericValue1,Quantity,DeliveryIdList,Remark',
+        '$select': 'StyleId,StyleCode,NumericValue1,Quantity,DeliveryIdList,Remark,SeasonId,Status',
         '$filter': 'SeasonId in (10,11) and BrandId in (4,8) and DivisionId eq 6 and Status ne 103 and Status ne 1',
-        '$expand': 'UserDefinedField5($select=Name),Season($select=Name),StyleStatus($select=Name),MarketField3($select=Name),MarketField5($select=Name),SubCategory($select=Name),ProductSubSubCategory($select=Name),Brand($select=Name),Division($select=Id,Name,Code),StyleSupplier($select=Name),StyleBOO($select=Id;$expand=StyleBOLOperation($select=Id,OperationId,Sam;$filter=OperationId eq 1)),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,Quantity,ColorwayStatus,ThemeId,ColorwayUserField1,ColorwayUserField5,FreeFieldOne,FreeFieldFive,FreeFieldThree;$expand=theme($select=Code,Name,Description),ColorwayUserDefinedField4($select=Id,Name);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
+        '$expand': 'UserDefinedField5($select=Id,Name),Season($select=Id,Name),StyleStatus($select=Id,Name),MarketField3($select=Name),MarketField5($select=Name),SubCategory($select=Id,Name),ProductSubSubCategory($select=Id,Name),Brand($select=Id,Name),Division($select=Id,Name,Code),StyleSupplier($select=Name),StyleBOO($select=Id;$expand=StyleBOLOperation($select=Id,OperationId,Sam;$filter=OperationId eq 1)),StyleColorways($select=StyleColorwayId,Code,Name,MinimumQuantity,Quantity,ColorwayStatus,ThemeId,ColorwayUserField1,ColorwayUserField5,FreeFieldOne,FreeFieldFive,FreeFieldThree;$expand=theme($select=Code,Name,Description),ColorwayUserDefinedField4($select=Id,Name);$filter=ColorwayStatus ne 4),StyleExtendedFieldValues($select=StyleId,Id,ExtFldId,NumberValue,CheckBoxValue;$expand=StyleExtendedFields($select=Name)),StyleCosting($expand=StyleCostElements($expand=StyleCostingSupplierVals),StyleCostSuppliers($expand=StyleSupplier($select=Id,SupplierId,Code,SupplierName));$select=Id,CostModelId,CurrencyId)'
       };
       
       console.log(`📞 PLM'den style costing verileri çekiliyor...`);
@@ -251,6 +252,10 @@ class StyleCostingService {
       console.log(`🎨 ${themePids.size} benzersiz tema için IDM Alt_Sezon verisi çekiliyor...`);
       const themeAttrMap = await this.loadThemeAttributes([...themePids]);
 
+      // Görünen isimleri ID'den (tr-tr) çöz — PLM generic lookup dili değişse de
+      // çıktı tutarlı Türkçe kalır. Kolon adları (key) değişmez, sadece değerler.
+      const lk = await plmLookupService.load();
+
       const results = [];
 
       styles.forEach(style => {
@@ -297,17 +302,17 @@ class StyleCostingService {
               deliveryIdList: style.DeliveryIdList,
               remark: style.Remark,
               
-              // Yeni alanlar
-              season: style.Season ? style.Season.Name : null,
-              styleStatus: style.StyleStatus ? style.StyleStatus.Name : null,
+              // Yeni alanlar (isimler ID'den tr-tr çözülüyor, fallback = PLM .Name)
+              season: plmLookupService.name(lk, 'sezon', (style.Season ? style.Season.Id : null) ?? style.SeasonId, style.Season ? style.Season.Name : null),
+              styleStatus: plmLookupService.name(lk, 'status', (style.StyleStatus ? style.StyleStatus.Id : null) ?? style.Status, style.StyleStatus ? style.StyleStatus.Name : null),
               
               // Kategorik bilgiler
-              division: style.Division ? style.Division.Name : null,
-              marka: style.Brand ? style.Brand.Name : null,
+              division: plmLookupService.name(lk, 'division', style.Division ? style.Division.Id : null, style.Division ? style.Division.Name : null),
+              marka: plmLookupService.name(lk, 'brand', style.Brand ? style.Brand.Id : null, style.Brand ? style.Brand.Name : null),
               brandId: style.Brand ? style.Brand.Id : null,
-              urunGrubu: style.SubCategory ? style.SubCategory.Name : null,
+              urunGrubu: plmLookupService.name(lk, 'subCategory', style.SubCategory ? style.SubCategory.Id : null, style.SubCategory ? style.SubCategory.Name : null),
               subCategoryId: style.SubCategory ? style.SubCategory.Id : null,
-              urunAltGrubu: (style.ProductSubSubCategory || style.Productsubsubcategory) ? (style.ProductSubSubCategory || style.Productsubsubcategory).Name : null,
+              urunAltGrubu: plmLookupService.name(lk, 'subSubCategory', (style.ProductSubSubCategory || style.Productsubsubcategory) ? (style.ProductSubSubCategory || style.Productsubsubcategory).Id : null, (style.ProductSubSubCategory || style.Productsubsubcategory) ? (style.ProductSubSubCategory || style.Productsubsubcategory).Name : null),
               subSubCategoryId: (style.ProductSubSubCategory || style.Productsubsubcategory) ? (style.ProductSubSubCategory || style.Productsubsubcategory).Id : null,
               sam: (() => {
                 const boo = style.StyleBOO && style.StyleBOO[0];
@@ -316,7 +321,7 @@ class StyleCostingService {
               })(),
               marketField3: style.MarketField3 ? style.MarketField3.Name : null,
               marketField5: style.MarketField5 ? style.MarketField5.Name : null,
-              udf5: style.UserDefinedField5 ? style.UserDefinedField5.Name : null,
+              udf5: plmLookupService.name(lk, 'segment', style.UserDefinedField5 ? style.UserDefinedField5.Id : null, style.UserDefinedField5 ? style.UserDefinedField5.Name : null),
               udf5Id: style.UserDefinedField5 ? style.UserDefinedField5.Id : null,
               
               // Colorway bilgileri
@@ -326,13 +331,13 @@ class StyleCostingService {
               colorwayStatus: colorway.ColorwayStatus,
               minimumQuantity: colorway.MinimumQuantity,
               quantity: colorway.Quantity,
-              colorwayUserField1: COLORWAY_USER_FIELD1_MAP[colorway.ColorwayUserField1] || colorway.ColorwayUserField1, // Fashion Pyramid
-              colorwayUserField4: colorway.ColorwayUserDefinedField4 ? colorway.ColorwayUserDefinedField4.Name : null,
+              colorwayUserField1: plmLookupService.name(lk, 'fashionPyramid', colorway.ColorwayUserField1, COLORWAY_USER_FIELD1_MAP[colorway.ColorwayUserField1] || colorway.ColorwayUserField1), // Fashion Pyramid
+              colorwayUserField4: plmLookupService.name(lk, 'lifeStyleGrup', colorway.ColorwayUserDefinedField4 ? colorway.ColorwayUserDefinedField4.Id : null, colorway.ColorwayUserDefinedField4 ? colorway.ColorwayUserDefinedField4.Name : null),
               colorwayUserField5: colorway.ColorwayUserField5, // Yeni alan
               freeFieldOne: colorway.FreeFieldOne, // Cluster
               freeFieldFive: colorway.FreeFieldFive,
               freeFieldThree: colorway.FreeFieldThree, // Faz
-              cud4: colorway.ColorwayUserDefinedField4 ? colorway.ColorwayUserDefinedField4.Name : null,
+              cud4: plmLookupService.name(lk, 'lifeStyleGrup', colorway.ColorwayUserDefinedField4 ? colorway.ColorwayUserDefinedField4.Id : null, colorway.ColorwayUserDefinedField4 ? colorway.ColorwayUserDefinedField4.Name : null),
               cud4Id: colorway.ColorwayUserDefinedField4 ? colorway.ColorwayUserDefinedField4.Id : null,
               cud5: colorway.ColorwayUserDefinedField5 ? colorway.ColorwayUserDefinedField5.Name : null,
               cud5Id: colorway.ColorwayUserDefinedField5 ? colorway.ColorwayUserDefinedField5.Id : null,
